@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oliday Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .question-container {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            min-height: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .question {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .answers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .answer-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .answer-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            animation: correctAnswer 0.6s ease;
+        }
+
+        .answer-btn.incorrect {
+            background: linear-gradient(45deg, #f44336, #da190b);
+            animation: incorrectAnswer 0.6s ease;
+        }
+
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes incorrectAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .next-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: block;
+            margin: 2rem auto;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .next-btn.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .category-selector {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .category-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .final-score {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧠 Oliday Quiz</h1>
+        
+        <div class="score-board">
+            <div>Score: <span id="score">0</span></div>
+            <div>Question: <span id="current-question">0</span> / <span id="total-questions">10</span></div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="category-selector" id="category-selector">
+            <h2>Choisissez une catégorie :</h2>
+            <button class="category-btn" onclick="startQuiz('culture')">Culture Générale</button>
+            <button class="category-btn" onclick="startQuiz('science')">Sciences</button>
+            <button class="category-btn" onclick="startQuiz('histoire')">Histoire</button>
+            <button class="category-btn" onclick="startQuiz('sport')">Sport</button>
+            <button class="category-btn" onclick="startQuiz('mixed')">Mélangé</button>
+        </div>
+
+        <div class="question-container" id="question-container" style="display: none;">
+            <div class="question" id="question"></div>
+            <div class="answers" id="answers"></div>
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">Question Suivante</button>
+        </div>
+
+        <div id="final-screen" style="display: none; text-align: center;">
+            <div class="final-score">
+                🎉 Quiz Terminé ! 🎉<br>
+                Score Final: <span id="final-score"></span> / <span id="final-total"></span>
+            </div>
+            <button class="restart-btn" onclick="restart()">Nouveau Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = {
+            culture: [
+                {
+                    question: "Quelle est la capitale de l'Australie ?",
+                    answers: ["Sydney", "Melbourne", "Canberra", "Brisbane"],
+                    correct: 2
+                },
+                {
+                    question: "Qui a peint 'La Joconde' ?",
+                    answers: ["Van Gogh", "Picasso", "Léonard de Vinci", "Michel-Ange"],
+                    correct: 2
+                },
+                {
+                    question: "Combien y a-t-il de continents ?",
+                    answers: ["5", "6", "7", "8"],
+                    correct: 2
+                },
+                {
+                    question: "Quelle est la langue la plus parlée au monde ?",
+                    answers: ["Anglais", "Espagnol", "Mandarin", "Hindi"],
+                    correct: 2
+                },
+                {
+                    question: "Quel est le plus grand océan ?",
+                    answers: ["Atlantique", "Indien", "Arctique", "Pacifique"],
+                    correct: 3
+                }
+            ],
+            science: [
+                {
+                    question: "Quelle est la formule chimique de l'eau ?",
+                    answers: ["CO2", "H2O", "O2", "H2SO4"],
+                    correct: 1
+                },
+                {
+                    question: "Combien d'os a un adulte humain ?",
+                    answers: ["206", "186", "226", "246"],
+                    correct: 0
+                },
+                {
+                    question: "Quelle planète est la plus proche du Soleil ?",
+                    answers: ["Vénus", "Mars", "Mercure", "Terre"],
+                    correct: 2
+                },
+                {
+                    question: "Qui a développé la théorie de la relativité ?",
+                    answers: ["Newton", "Einstein", "Galilée", "Darwin"],
+                    correct: 1
+                },
+                {
+                    question: "Quel gaz représente environ 78% de l'atmosphère terrestre ?",
+                    answers: ["Oxygène", "Azote", "Dioxyde de carbone", "Argon"],
+                    correct: 1
+                }
+            ],
+            histoire: [
+                {
+                    question: "En quelle année a eu lieu la Révolution française ?",
+                    answers: ["1789", "1792", "1776", "1804"],
+                    correct: 0
+                },
+                {
+                    question: "Qui était le premier empereur romain ?",
+                    answers: ["Jules César", "Auguste", "Néron", "Trajan"],
+                    correct: 1
+                },
+                {
+                    question: "Quelle guerre a duré de 1914 à 1918 ?",
+                    answers: ["Guerre de Cent Ans", "Première Guerre mondiale", "Guerre de Sécession", "Guerre froide"],
+                    correct: 1
+                },
+                {
+                    question: "Quel explorateur a découvert l'Amérique en 1492 ?",
+                    answers: ["Vasco da Gama", "Magellan", "Christophe Colomb", "Marco Polo"],
+                    correct: 2
+                },
+                {
+                    question: "Quelle civilisation a construit le Machu Picchu ?",
+                    answers: ["Aztèques", "Mayas", "Incas", "Olmèques"],
+                    correct: 2
+                }
+            ],
+            sport: [
+                {
+                    question: "Combien de joueurs y a-t-il dans une équipe de football ?",
+                    answers: ["10", "11", "12", "9"],
+                    correct: 1
+                },
+                {
+                    question: "Quel pays a remporté la Coupe du Monde de football 2018 ?",
+                    answers: ["Brésil", "Allemagne", "France", "Argentine"],
+                    correct: 2
+                },
+                {
+                    question: "Combien de sets faut-il gagner pour remporter un match de tennis à Roland Garros (hommes) ?",
+                    answers: ["2", "3", "4", "5"],
+                    correct: 1
+                },
+                {
+                    question: "Quel sport pratique-t-on à Wimbledon ?",
+                    answers: ["Football", "Rugby", "Tennis", "Cricket"],
+                    correct: 2
+                },
+                {
+                    question: "Combien de disciplines y a-t-il dans un décathlon ?",
+                    answers: ["8", "9", "10", "12"],
+                    correct: 2
+                }
+            ]
+        };
+
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let selectedAnswer = null;
+
+        function startQuiz(category) {
+            document.getElementById('category-selector').style.display = 'none';
+            document.getElementById('question-container').style.display = 'block';
+            
+            if (category === 'mixed') {
+                currentQuestions = [];
+                Object.keys(questions).forEach(cat => {
+                    currentQuestions = currentQuestions.concat(questions[cat].slice(0, 2));
+                });
+                currentQuestions = shuffleArray(currentQuestions);
+            } else {
+                currentQuestions = [...questions[category]];
+            }
+            
+            currentQuestionIndex = 0;
+            score = 0;
+            updateScore();
+            showQuestion();
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function showQuestion() {
+            const question = currentQuestions[currentQuestionIndex];
+            document.getElementById('question').textContent = question.question;
+            
+            const answersContainer = document.getElementById('answers');
+            answersContainer.innerHTML = '';
+            
+            question.answers.forEach((answer, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = answer;
+                btn.onclick = () => selectAnswer(index);
+                answersContainer.appendChild(btn);
+            });
+            
+            document.getElementById('next-btn').classList.remove('show');
+            selectedAnswer = null;
+            updateProgress();
+        }
+
+        function selectAnswer(index) {
+            if (selectedAnswer !== null) return;
+            
+            selectedAnswer = index;
+            const question = currentQuestions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons[index].classList.add(index === question.correct ? 'correct' : 'incorrect');
+            
+            if (index === question.correct) {
+                score++;
+            } else {
+                buttons[question.correct].classList.add('correct');
+            }
+            
+            updateScore();
+            
+            setTimeout(() => {
+                document.getElementById('next-btn').classList.add('show');
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < currentQuestions.length) {
+                showQuestion();
+            } else {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            document.getElementById('question-container').style.display = 'none';
+            document.getElementById('final-screen').style.display = 'block';
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-total').textContent = currentQuestions.length;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('current-question').textContent = currentQuestionIndex + 1;
+            document.getElementById('total-questions').textContent = currentQuestions.length;
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        function restart() {
+            document.getElementById('final-screen').style.display = 'none';
+            document.getElementById('category-selector').style.display = 'block';
+            document.getElementById('progress-fill').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
