@@ -1,194 +1,264 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Oliday Quizz</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      padding: 20px;
-      text-align: center;
+// Variables globales
+let playerName = "";
+let currentQuestion = 0;
+let score = 0;
+let correctAnswers = [];
+let wrongAnswers = [];
+let quizQuestions = [];
+let currentTheme = "";
+let timer;
+let timeLeft = 5;
+
+// Questions de base par thème (à adapter si besoin)
+const themes = {
+  Histoire: [
+    { q: "En quelle année la Révolution française a-t-elle commencé ?", o: ["1789", "1812", "1848", "1765"], a: "1789" },
+    { q: "Qui était Napoléon Bonaparte ?", o: ["Un roi", "Un empereur", "Un peintre", "Un philosophe"], a: "Un empereur" },
+    { q: "Quel roi a été guillotiné pendant la Révolution ?", o: ["Louis XIV", "Louis XV", "Louis XVI", "Charles X"], a: "Louis XVI" },
+    { q: "Où est née Jeanne d’Arc ?", o: ["Orléans", "Rouen", "Domrémy", "Reims"], a: "Domrémy" },
+    { q: "Quelle guerre a opposé la France à l’Allemagne en 1870 ?", o: ["Guerre de Cent Ans", "Première Guerre mondiale", "Guerre franco-prussienne", "Guerre de Sécession"], a: "Guerre franco-prussienne" },
+  ]
+};
+
+// Afficher une question
+function showQuestion() {
+  addReturnToMenu();
+  applyThemeBackground(currentTheme);
+  const container = document.getElementById("quizContainer");
+  container.innerHTML = "";
+  if (currentQuestion >= quizQuestions.length) {
+    showResults();
+    return;
+  }
+  const question = quizQuestions[currentQuestion];
+  const questionHTML = `
+    <div class='question-block'>
+      <h2>Question ${currentQuestion + 1}</h2>
+      <p>${question.q}</p>
+      <button class='option-button' onclick='checkAnswer(0)'>${question.o[0]}</button>
+      <button class='option-button' onclick='checkAnswer(1)'>${question.o[1]}</button>
+      <button class='option-button' onclick='checkAnswer(2)'>${question.o[2]}</button>
+      <button class='option-button' onclick='checkAnswer(3)'>${question.o[3]}</button>
+    </div>`;
+  container.innerHTML = questionHTML;
+  startTimer();
+}
+
+// Vérifier la réponse
+function checkAnswer(index) {
+  clearInterval(timer);
+  const question = quizQuestions[currentQuestion];
+  const selectedAnswer = question.o[index];
+  const isCorrect = selectedAnswer === question.a;
+  if (isCorrect) {
+    correctAnswers.push({ q: question.q, a: question.a });
+    score++;
+    playSound(true);
+  } else {
+    wrongAnswers.push({ q: question.q, a: question.a, w: selectedAnswer });
+    playSound(false);
+  }
+  currentQuestion++;
+  showQuestion();
+}
+
+// Sons bonnes/mauvaises réponses
+function playSound(correct) {
+  const audio = new Audio(correct
+    ? 'https://cdn.pixabay.com/audio/2022/03/15/audio_bfa6fa2045.mp3'
+    : 'https://cdn.pixabay.com/audio/2022/03/15/audio_8ab2b07e36.mp3');
+  audio.play();
+}
+
+// Timer 5s
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = 5;
+  updateTimerDisplay();
+  timer = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      checkAnswer(-1);
     }
-    #menu, #quiz, #result { display: none; }
-    .question-box {
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      margin: 20px auto;
-      max-width: 600px;
-      text-align: left;
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  let timerDisplay = document.getElementById("timerDisplay");
+  if (!timerDisplay) {
+    timerDisplay = document.createElement("div");
+    timerDisplay.id = "timerDisplay";
+    timerDisplay.style.fontSize = "20px";
+    timerDisplay.style.marginTop = "10px";
+    document.getElementById("quizContainer").appendChild(timerDisplay);
+  }
+  timerDisplay.innerText = `Temps restant : ${timeLeft}s`;
+}
+
+// Résultats et score
+function showResults() {
+  saveScore();
+  displayLeaderboard();
+  const container = document.getElementById("resultContainer");
+  container.innerHTML = `<h2>Résultats pour ${playerName}</h2>
+    <p>Score : ${score}/${quizQuestions.length}</p>
+    <h3>Réponses correctes :</h3>
+    <ul>${correctAnswers.map(c => `<li><strong>${c.q}</strong><br>✔️ ${c.a}</li>`).join('')}</ul>
+    <h3>Réponses incorrectes :</h3>
+    <ul>${wrongAnswers.map(w => `<li><strong>${w.q}</strong><br>❌ Réponse : ${w.w}<br>✅ Bonne : ${w.a}</li>`).join('')}</ul>
+    <button onclick="location.reload()">Retour au menu</button>`;
+  document.getElementById("quizContainer").style.display = "none";
+  container.style.display = "block";
+}
+
+function saveScore() {
+  const scores = JSON.parse(localStorage.getItem("quiz_scores") || "[]");
+  scores.push({ name: playerName, score: score, total: quizQuestions.length });
+  scores.sort((a, b) => b.score - a.score);
+  localStorage.setItem("quiz_scores", JSON.stringify(scores.slice(0, 5)));
+}
+
+function displayLeaderboard() {
+  const scoreboard = document.getElementById("scoreboard");
+  const scores = JSON.parse(localStorage.getItem("quiz_scores") || "[]");
+  scoreboard.innerHTML = `<h3>🏆 Classement - Top 5</h3><ol>` +
+    scores.map(s => `<li>${s.name} : ${s.score}/${s.total}</li>`).join('') +
+    `</ol>`;
+  scoreboard.style.display = "block";
+}
+
+function applyThemeBackground(theme) {
+  const bg = localStorage.getItem(`bg_theme_${theme}`);
+  if (bg) {
+    document.body.style.backgroundImage = `url('${bg}')`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundColor = 'black';
+    document.body.style.backgroundBlendMode = 'overlay';
+  } else {
+    document.body.style.backgroundImage = "url('https://images.unsplash.com/photo-1606761568499-6c0e5390c13c?fit=crop&w=1400&q=80')";
+  }
+}
+
+function addReturnToMenu() {
+  const menuBtn = document.getElementById("returnBtn");
+  if (!menuBtn) {
+    const btn = document.createElement("button");
+    btn.id = "returnBtn";
+    btn.innerText = "Retour au menu";
+    btn.style.marginTop = "20px";
+    btn.onclick = () => location.reload();
+    document.getElementById("quizContainer").appendChild(btn);
+  }
+}
+
+// Zone admin
+function showAdmin() {
+  const adminDiv = document.createElement("div");
+  adminDiv.innerHTML = `<h3>Mode Admin</h3>`;
+
+  const resetBtn = document.createElement("button");
+  resetBtn.innerText = "🔄 Réinitialiser le classement";
+  resetBtn.onclick = () => {
+    if (confirm("Voulez-vous vraiment réinitialiser les scores ?")) {
+      localStorage.removeItem("quiz_scores");
+      alert("Classement réinitialisé.");
+      displayLeaderboard();
     }
-    .answers button {
-      margin: 5px 0;
-      padding: 10px;
-      width: 100%;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    #timer {
-      font-size: 24px;
-      color: #e74c3c;
-      margin: 10px 0;
-    }
-  </style>
-</head>
-<body>
-
-<h1>🎉 Oliday Quizz 🎉</h1>
-
-<!-- PAGE D’ACCUEIL -->
-<div id="start">
-  <p>Entrez votre prénom :</p>
-  <input type="text" id="playerName" placeholder="Votre prénom" />
-  <button onclick="startMenu()">Accéder au menu</button>
-</div>
-
-<!-- MENU DES THÈMES -->
-<div id="menu">
-  <h2>Thème sélectionné :</h2>
-  <h3 id="themeTitle"></h3>
-  <button onclick="startQuiz()">Commencer le quiz</button>
-</div>
-
-<!-- ZONE DU QUIZ -->
-<div id="quiz">
-  <div id="timer">⏳ 5</div>
-  <div class="question-box">
-    <div id="question"></div>
-    <div class="answers" id="answers"></div>
-  </div>
-</div>
-
-<!-- RÉSULTAT FINAL -->
-<div id="result">
-  <h2>Résultat</h2>
-  <p id="finalScore"></p>
-  <button onclick="location.reload()">Rejouer</button>
-</div>
-
-<script>
-  const themes = {
-    "Histoire": [
-      { q: "Qui a été le premier président de la République française ?", a: ["Napoléon Bonaparte", "Louis-Napoléon Bonaparte", "Charles de Gaulle", "Jules Ferry"], r: "Louis-Napoléon Bonaparte" },
-      { q: "Quelle année marque le début de la Révolution française ?", a: ["1789", "1792", "1804", "1776"], r: "1789" },
-      { q: "Quel empire domina l’Europe au XIXe siècle ?", a: ["Empire britannique", "Empire austro-hongrois", "Empire ottoman", "Empire napoléonien"], r: "Empire napoléonien" }
-    ],
-    "Géographie": [
-      { q: "Quel est le plus long fleuve du monde ?", a: ["Nil", "Amazone", "Yangtsé", "Mississippi"], r: "Amazone" },
-      { q: "Quel pays a le plus de frontières terrestres ?", a: ["Chine", "Russie", "Brésil", "Inde"], r: "Chine" },
-      { q: "Quel est le plus grand désert ?", a: ["Sahara", "Arctique", "Antarctique", "Gobi"], r: "Antarctique" }
-    ],
-    "Sciences": [
-      { q: "Quel est l'organe principal de la respiration ?", a: ["Cœur", "Estomac", "Poumons", "Foie"], r: "Poumons" },
-      { q: "Combien y a-t-il de planètes dans le système solaire ?", a: ["8", "9", "10", "7"], r: "8" },
-      { q: "Quel scientifique a découvert la pénicilline ?", a: ["Pasteur", "Einstein", "Fleming", "Newton"], r: "Fleming" }
-    ],
-    "Cinéma": [
-      { q: "Qui a réalisé Titanic ?", a: ["Steven Spielberg", "James Cameron", "Christopher Nolan", "Ridley Scott"], r: "James Cameron" },
-      { q: "Quel acteur joue Iron Man ?", a: ["Chris Evans", "Chris Hemsworth", "Robert Downey Jr.", "Mark Ruffalo"], r: "Robert Downey Jr." },
-      { q: "Quel film a remporté l’Oscar du meilleur film en 2020 ?", a: ["1917", "Parasite", "Joker", "Once Upon a Time in Hollywood"], r: "Parasite" }
-    ],
-    "Littérature": [
-      { q: "Qui a écrit *Le Petit Prince* ?", a: ["Victor Hugo", "Stendhal", "Antoine de Saint-Exupéry", "Camus"], r: "Antoine de Saint-Exupéry" },
-      { q: "Quel est le genre de *1984* de George Orwell ?", a: ["Roman historique", "Science-fiction", "Policier", "Autobiographie"], r: "Science-fiction" },
-      { q: "Combien de volumes composent *Harry Potter* ?", a: ["6", "7", "8", "9"], r: "7" }
-    ],
-    "Sport": [
-      { q: "Combien de joueurs dans une équipe de rugby ?", a: ["11", "13", "15", "18"], r: "15" },
-      { q: "Quel pays a remporté la Coupe du monde 2018 ?", a: ["Brésil", "Allemagne", "France", "Croatie"], r: "France" },
-      { q: "Quel est le sport de Serena Williams ?", a: ["Football", "Basket", "Tennis", "Golf"], r: "Tennis" }
-    ],
-    "Musique": [
-      { q: "Qui chante *Shape of You* ?", a: ["Ed Sheeran", "Justin Bieber", "Drake", "Adele"], r: "Ed Sheeran" },
-      { q: "Quel groupe a composé *Bohemian Rhapsody* ?", a: ["Queen", "The Beatles", "Pink Floyd", "U2"], r: "Queen" },
-      { q: "Quel instrument a 88 touches ?", a: ["Guitare", "Piano", "Harpe", "Violon"], r: "Piano" }
-    ],
-    "Informatique": [
-      { q: "Que veut dire 'HTML' ?", a: ["High Text Markup Language", "HyperText Markup Language", "Hotmail Text Markup Language", "Hyper Transfer Mail Language"], r: "HyperText Markup Language" },
-      { q: "Qui a créé Microsoft ?", a: ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Elon Musk"], r: "Bill Gates" },
-      { q: "Que signifie 'URL' ?", a: ["User Result Link", "Unified Resource Locator", "Uniform Resource Locator", "Universal Routing Language"], r: "Uniform Resource Locator" }
-    ],
-    "Cuisine": [
-      { q: "Quel fruit entre dans la composition d’un guacamole ?", a: ["Tomate", "Avocat", "Mangue", "Courgette"], r: "Avocat" },
-      { q: "Quel est le principal ingrédient d’une omelette ?", a: ["Farine", "Lait", "Œufs", "Riz"], r: "Œufs" },
-      { q: "Quel pays est le berceau des sushis ?", a: ["Chine", "Corée", "Thaïlande", "Japon"], r: "Japon" }
-    ],
-    "Langues": [
-      { q: "Quelle langue est parlée au Brésil ?", a: ["Espagnol", "Français", "Portugais", "Italien"], r: "Portugais" },
-      { q: "Comment dit-on 'merci' en italien ?", a: ["Gracias", "Danke", "Grazie", "Merci"], r: "Grazie" },
-      { q: "Quel alphabet est utilisé en russe ?", a: ["Latin", "Grec", "Cyrillique", "Arabe"], r: "Cyrillique" }
-    ]
   };
+  adminDiv.appendChild(resetBtn);
 
-  let playerName = "";
-  let selectedTheme = "";
-  let quizQuestions = [];
-  let currentQuestion = 0;
-  let score = 0;
-  let timer;
+  const themeBgControls = document.createElement("div");
+  themeBgControls.innerHTML = `<h3>Changer les images de fond par thème</h3>`;
+  Object.keys(themes).forEach(theme => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+    label.innerHTML = `${theme} : <input type='file' accept='image/jpeg' onchange='updateThemeBackground(event, "${theme}")'>`;
+    themeBgControls.appendChild(label);
+  });
+  adminDiv.appendChild(themeBgControls);
 
-  function startMenu() {
-    playerName = document.getElementById("playerName").value.trim();
-    if (!playerName) return alert("Merci de renseigner votre prénom !");
-    const themeNames = Object.keys(themes);
-    selectedTheme = themeNames[Math.floor(Math.random() * themeNames.length)];
-    document.getElementById("themeTitle").innerText = selectedTheme;
-    document.getElementById("start").style.display = "none";
-    document.getElementById("menu").style.display = "block";
+  const quizBuilderBtn = document.createElement("button");
+  quizBuilderBtn.innerText = "🎨 Créer un quiz personnalisé";
+  quizBuilderBtn.onclick = () => showCustomQuizBuilder();
+  adminDiv.appendChild(quizBuilderBtn);
+
+  document.getElementById("quizContainer").appendChild(adminDiv);
+}
+
+function updateThemeBackground(event, theme) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      localStorage.setItem(`bg_theme_${theme}`, e.target.result);
+      alert(`Image pour '${theme}' mise à jour.`);
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// Création de quiz personnalisé
+function showCustomQuizBuilder() {
+  const container = document.getElementById("quizContainer");
+  container.innerHTML = "<h2>Créer un quiz personnalisé</h2>";
+
+  const titleInput = document.createElement("input");
+  titleInput.placeholder = "Titre du quiz";
+  titleInput.id = "customTitle";
+  container.appendChild(titleInput);
+
+  const questionList = document.createElement("div");
+  questionList.id = "customQuestions";
+  container.appendChild(questionList);
+
+  for (let i = 0; i < 10; i++) {
+    const qBlock = document.createElement("div");
+    qBlock.innerHTML = `
+      <h4>Question ${i + 1}</h4>
+      <input placeholder="Question" id="q${i}" /><br>
+      <input placeholder="Option A" id="q${i}_0" />
+      <input placeholder="Option B" id="q${i}_1" />
+      <input placeholder="Option C" id="q${i}_2" />
+      <input placeholder="Option D" id="q${i}_3" />
+      <select id="q${i}_a">
+        <option value="0">Bonne réponse : A</option>
+        <option value="1">Bonne réponse : B</option>
+        <option value="2">Bonne réponse : C</option>
+        <option value="3">Bonne réponse : D</option>
+      </select>
+      <hr>`;
+    questionList.appendChild(qBlock);
   }
 
-  function startQuiz() {
-    quizQuestions = [...themes[selectedTheme]].sort(() => 0.5 - Math.random()).slice(0, 10);
-    score = 0;
-    currentQuestion = 0;
-    document.getElementById("menu").style.display = "none";
-    document.getElementById("quiz").style.display = "block";
-    showQuestion();
-  }
-
-  function showQuestion() {
-    if (currentQuestion >= quizQuestions.length) return showResult();
-    const q = quizQuestions[currentQuestion];
-    document.getElementById("question").innerHTML = `<strong>Q${currentQuestion + 1}:</strong> ${q.q}`;
-    const answersDiv = document.getElementById("answers");
-    answersDiv.innerHTML = "";
-    q.a.sort(() => 0.5 - Math.random()).forEach(ans => {
-      const btn = document.createElement("button");
-      btn.textContent = ans;
-      btn.onclick = () => {
-        if (ans === q.r) score++;
-        clearInterval(timer);
-        currentQuestion++;
-        showQuestion();
-      };
-      answersDiv.appendChild(btn);
-    });
-    startTimer();
-  }
-
-  function startTimer() {
-    let timeLeft = 5;
-    document.getElementById("timer").innerText = `⏳ ${timeLeft}`;
-    timer = setInterval(() => {
-      timeLeft--;
-      document.getElementById("timer").innerText = `⏳ ${timeLeft}`;
-      if (timeLeft <= 0) {
-        clearInterval(timer);
-        currentQuestion++;
-        showQuestion();
+  const launchBtn = document.createElement("button");
+  launchBtn.innerText = "Lancer le quiz";
+  launchBtn.onclick = () => {
+    const newQuestions = [];
+    for (let i = 0; i < 10; i++) {
+      const q = document.getElementById(`q${i}`).value;
+      const o0 = document.getElementById(`q${i}_0`).value;
+      const o1 = document.getElementById(`q${i}_1`).value;
+      const o2 = document.getElementById(`q${i}_2`).value;
+      const o3 = document.getElementById(`q${i}_3`).value;
+      const aIndex = parseInt(document.getElementById(`q${i}_a`).value);
+      if (q && o0 && o1 && o2 && o3) {
+        newQuestions.push({ q: q, o: [o0, o1, o2, o3], a: [o0, o1, o2, o3][aIndex] });
       }
-    }, 1000);
-  }
-
-  function showResult() {
-    document.getElementById("quiz").style.display = "none";
-    document.getElementById("result").style.display = "block";
-    document.getElementById("finalScore").innerText = `${playerName}, vous avez obtenu ${score} / ${quizQuestions.length} !`;
-  }
-</script>
-
-</body>
-</html>
+    }
+    if (newQuestions.length > 0) {
+      quizQuestions = newQuestions.slice(0, 5); // 5 questions seulement
+      currentQuestion = 0;
+      score = 0;
+      correctAnswers = [];
+      wrongAnswers = [];
+      showQuestion();
+    } else {
+      alert("Veuillez saisir au moins une question complète.");
+    }
+  };
+  container.appendChild(launchBtn);
+}
