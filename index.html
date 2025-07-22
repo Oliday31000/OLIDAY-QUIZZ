@@ -249,7 +249,7 @@
         .progress-bar {
             height: 100%;
             background: linear-gradient(90deg, #00ffff, #ff006e);
-         transition: width 0.3s ease;
+            transition: width 0.3s ease;
         }
 
         .admin-panel {
@@ -275,7 +275,6 @@
         }
 
         .qr-code canvas {
-        .qr-code img {
             border-radius: 5px;
         }
 
@@ -325,16 +324,6 @@
             box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
         }
 
-        .player-count {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-
         @media (max-width: 768px) {
             .answers {
                 grid-template-columns: 1fr;
@@ -362,7 +351,6 @@
         <div id="homeScreen" class="screen">
             <div class="qr-code">
                 <canvas id="qrcode" width="150" height="150"></canvas>
-                <img id="qrcodeImage" width="150" height="150" alt="QR Code">
                 <p style="color: #000; margin-top: 10px;">Scannez pour jouer !</p>
             </div>
 
@@ -379,10 +367,6 @@
                     <button class="btn btn-secondary" onclick="showBackgroundManager()">Changer Fonds</button>
                     <button class="btn btn-success" onclick="showCustomQuizCreator()">Quiz Personnalisé</button>
                 </div>
-                <div style="margin-top: 10px;">
-                    <input type="file" id="qrFileInput" class="file-input" accept="image/*">
-                    <label for="qrFileInput" class="file-label">Charger QR Code</label>
-                </div>
             </div>
 
             <div class="leaderboard">
@@ -396,7 +380,6 @@
 
             <div style="text-align: center; margin-top: 20px;">
                 <button class="btn btn-success" onclick="startRandomQuiz()">🎲 Thème Aléatoire</button>
-                <button class="btn btn-success" onclick="adminStartRandomQuiz()">🎲 Thème Aléatoire</button>
             </div>
         </div>
 
@@ -422,7 +405,25 @@
                 <h3 id="finalScore"></h3>
                 <div id="resultsList"></div>
                 <button class="btn" onclick="goHome()">Retour au Menu</button>
-@@ -427,50 +441,51 @@
+            </div>
+        </div>
+
+        <!-- Gestionnaire de thèmes -->
+        <div id="themeManager" class="screen hidden">
+            <h2>Gestionnaire de Thèmes</h2>
+            <div id="themesList"></div>
+            <button class="btn btn-secondary" onclick="goHome()">Retour</button>
+        </div>
+
+        <!-- Gestionnaire de fonds -->
+        <div id="backgroundManager" class="screen hidden">
+            <h2>Gestionnaire de Fonds d'Écran</h2>
+            <div class="input-group">
+                <label>Fond d'accueil :</label>
+                <input type="file" id="homeBackground" class="file-input" accept="image/jpeg,image/jpg" onchange="changeBackground('home')">
+                <label for="homeBackground" class="file-label">Choisir une image</label>
+            </div>
+            
             <div id="themeBackgrounds"></div>
             
             <button class="btn btn-secondary" onclick="goHome()">Retour</button>
@@ -448,7 +449,6 @@
             </div>
         </div>
     </div>
-    <div id="playerCount" class="player-count"></div>
 
     <script>
         // Configuration et données du jeu
@@ -474,7 +474,100 @@
             ],
             Géographie: [
                 {q: "Quelle est la capitale de l'Australie ?", a: ["Sydney", "Melbourne", "Canberra", "Perth"], c: 2},
-@@ -571,114 +586,101 @@
+                {q: "Quel est le plus long fleuve du monde ?", a: ["Amazone", "Nil", "Mississippi", "Yangtsé"], c: 1},
+                {q: "Combien de continents y a-t-il ?", a: ["5", "6", "7", "8"], c: 2},
+                {q: "Quelle est la plus haute montagne du monde ?", a: ["K2", "Everest", "Kangchenjunga", "Makalu"], c: 1},
+                {q: "Dans quel pays se trouve Machu Picchu ?", a: ["Bolivie", "Équateur", "Pérou", "Chili"], c: 2},
+                {q: "Quel océan borde la côte ouest de l'Afrique ?", a: ["Indien", "Atlantique", "Pacifique", "Arctique"], c: 1},
+                {q: "Quelle est la capitale du Canada ?", a: ["Toronto", "Montréal", "Vancouver", "Ottawa"], c: 3},
+                {q: "Quel désert est le plus grand du monde ?", a: ["Sahara", "Gobi", "Antarctique", "Kalahari"], c: 2},
+                {q: "Dans quel pays se trouve la ville de Petra ?", a: ["Égypte", "Jordanie", "Syrie", "Liban"], c: 1},
+                {q: "Quel pays a le plus de fuseaux horaires ?", a: ["Russie", "États-Unis", "Chine", "Canada"], c: 0}
+            ],
+            Sciences: [
+                {q: "Quel est le symbole chimique de l'or ?", a: ["Go", "Au", "Or", "Ag"], c: 1},
+                {q: "Combien de planètes y a-t-il dans notre système solaire ?", a: ["7", "8", "9", "10"], c: 1},
+                {q: "Quelle est la vitesse de la lumière ?", a: ["300 000 km/s", "150 000 km/s", "500 000 km/s", "250 000 km/s"], c: 0},
+                {q: "Qui a découvert la pénicilline ?", a: ["Louis Pasteur", "Alexander Fleming", "Marie Curie", "Charles Darwin"], c: 1},
+                {q: "Quel gaz compose principalement l'atmosphère terrestre ?", a: ["Oxygène", "Azote", "Dioxyde de carbone", "Argon"], c: 1},
+                {q: "Combien d'os a le corps humain adulte ?", a: ["196", "206", "216", "226"], c: 1},
+                {q: "Quelle planète est la plus proche du Soleil ?", a: ["Vénus", "Mercure", "Mars", "Terre"], c: 1},
+                {q: "Quel scientifique a développé la théorie de la relativité ?", a: ["Isaac Newton", "Albert Einstein", "Galilée", "Stephen Hawking"], c: 1},
+                {q: "Quel est l'élément chimique le plus abondant dans l'univers ?", a: ["Hélium", "Hydrogène", "Oxygène", "Carbon"], c: 1},
+                {q: "À quelle température l'eau bout-elle (niveau de la mer) ?", a: ["90°C", "95°C", "100°C", "105°C"], c: 2}
+            ],
+            Sport: [
+                {q: "Combien de joueurs y a-t-il dans une équipe de football ?", a: ["10", "11", "12", "9"], c: 1},
+                {q: "Tous les combien d'années ont lieu les Jeux Olympiques d'été ?", a: ["2 ans", "3 ans", "4 ans", "5 ans"], c: 2},
+                {q: "Dans quel sport utilise-t-on un shuttle ?", a: ["Tennis", "Badminton", "Squash", "Ping-pong"], c: 1},
+                {q: "Combien de sets maximum peut durer un match de tennis masculin en Grand Chelem ?", a: ["3", "4", "5", "6"], c: 2},
+                {q: "Quel pays a remporté la Coupe du Monde de football 2018 ?", a: ["Brésil", "Allemagne", "France", "Argentine"], c: 2},
+                {q: "Dans quel sport évolue-t-on sur un tatami ?", a: ["Karaté", "Judo", "Taekwondo", "Boxe"], c: 1},
+                {q: "Combien de points vaut un panier à 3 points en basketball ?", a: ["2", "3", "4", "5"], c: 1},
+                {q: "Quel nageur a remporté le plus de médailles d'or olympiques ?", a: ["Mark Spitz", "Michael Phelps", "Ian Thorpe", "Ryan Lochte"], c: 1},
+                {q: "Dans quel sport utilise-t-on une raquette et une balle jaune ?", a: ["Badminton", "Squash", "Tennis", "Ping-pong"], c: 2},
+                {q: "Combien de tours fait un coureur de 10 000m sur une piste standard ?", a: ["20", "25", "30", "40"], c: 1}
+            ],
+            Cinéma: [
+                {q: "Qui a réalisé le film 'Titanic' ?", a: ["Steven Spielberg", "James Cameron", "Martin Scorsese", "Christopher Nolan"], c: 1},
+                {q: "Dans quel film trouve-t-on la réplique 'Que la Force soit avec toi' ?", a: ["Star Trek", "Star Wars", "Blade Runner", "Matrix"], c: 1},
+                {q: "Quel acteur joue Jack Sparrow dans 'Pirates des Caraïbes' ?", a: ["Orlando Bloom", "Johnny Depp", "Keira Knightley", "Geoffrey Rush"], c: 1},
+                {q: "Combien d'Oscars le film 'Le Seigneur des Anneaux : Le Retour du Roi' a-t-il remportés ?", a: ["9", "10", "11", "12"], c: 2},
+                {q: "Qui a composé la musique des films Harry Potter ?", a: ["Hans Zimmer", "John Williams", "Howard Shore", "Danny Elfman"], c: 1},
+                {q: "Dans quel film dit-on 'Hakuna Matata' ?", a: ["Le Livre de la Jungle", "Le Roi Lion", "Tarzan", "Pocahontas"], c: 1},
+                {q: "Quel film a remporté l'Oscar du meilleur film en 2020 ?", a: ["1917", "Joker", "Parasite", "Once Upon a Time in Hollywood"], c: 2},
+                {q: "Qui a réalisé 'Pulp Fiction' ?", a: ["Martin Scorsese", "Quentin Tarantino", "David Fincher", "Stanley Kubrick"], c: 1},
+                {q: "Dans quel film trouve-t-on le personnage de Darth Vader ?", a: ["Star Trek", "Star Wars", "Stargate", "Guardians of the Galaxy"], c: 1},
+                {q: "Quel acteur joue Iron Man dans l'univers Marvel ?", a: ["Chris Evans", "Chris Hemsworth", "Robert Downey Jr.", "Mark Ruffalo"], c: 2}
+            ],
+            Musique: [
+                {q: "Combien de cordes a une guitare classique ?", a: ["4", "5", "6", "7"], c: 2},
+                {q: "Quel groupe a chanté 'Bohemian Rhapsody' ?", a: ["The Beatles", "Queen", "Led Zeppelin", "The Rolling Stones"], c: 1},
+                {q: "Dans quel pays est né Mozart ?", a: ["Allemagne", "Autriche", "Suisse", "Italie"], c: 1},
+                {q: "Combien de symphonies Beethoven a-t-il composées ?", a: ["8", "9", "10", "11"], c: 1},
+                {q: "Quel instrument joue Yo-Yo Ma ?", a: ["Violon", "Piano", "Violoncelle", "Flûte"], c: 2},
+                {q: "Qui a composé 'La Flûte enchantée' ?", a: ["Bach", "Beethoven", "Mozart", "Haydn"], c: 2},
+                {q: "Quel groupe britannique a chanté 'Stairway to Heaven' ?", a: ["The Beatles", "Queen", "Led Zeppelin", "Pink Floyd"], c: 2},
+                {q: "Combien de touches noires y a-t-il sur un piano standard ?", a: ["32", "34", "36", "38"], c: 2},
+                {q: "Quel chanteur est surnommé 'The King of Pop' ?", a: ["Elvis Presley", "Michael Jackson", "Prince", "James Brown"], c: 1},
+                {q: "Dans quelle ville est né le jazz ?", a: ["New York", "Chicago", "La Nouvelle-Orléans", "Detroit"], c: 2}
+            ],
+            Littérature: [
+                {q: "Qui a écrit 'Les Misérables' ?", a: ["Victor Hugo", "Émile Zola", "Gustave Flaubert", "Alexandre Dumas"], c: 0},
+                {q: "Dans quel livre trouve-t-on le personnage de Sherlock Holmes ?", a: ["Agatha Christie", "Arthur Conan Doyle", "Edgar Allan Poe", "Raymond Chandler"], c: 1},
+                {q: "Qui a écrit '1984' ?", a: ["Aldous Huxley", "George Orwell", "Ray Bradbury", "Philip K. Dick"], c: 1},
+                {q: "Combien de tomes compte la saga 'Harry Potter' ?", a: ["6", "7", "8", "9"], c: 1},
+                {q: "Qui a écrit 'Le Petit Prince' ?", a: ["Jules Verne", "Antoine de Saint-Exupéry", "Marcel Proust", "Albert Camus"], c: 1},
+                {q: "Dans quelle langue Shakespeare a-t-il écrit ses œuvres ?", a: ["Latin", "Français", "Anglais ancien", "Anglais"], c: 2},
+                {q: "Qui a écrit 'Cent ans de solitude' ?", a: ["Pablo Neruda", "Gabriel García Márquez", "Mario Vargas Llosa", "Jorge Luis Borges"], c: 1},
+                {q: "Quel est le premier livre de la saga 'Le Seigneur des Anneaux' ?", a: ["Les Deux Tours", "La Communauté de l'Anneau", "Le Retour du Roi", "Bilbo le Hobbit"], c: 1},
+                {q: "Qui a écrit 'Madame Bovary' ?", a: ["Victor Hugo", "Gustave Flaubert", "Stendhal", "Honoré de Balzac"], c: 1},
+                {q: "Dans quel pays est né l'écrivain Kafka ?", a: ["Autriche", "Allemagne", "République tchèque", "Pologne"], c: 2}
+            ],
+            Technologie: [
+                {q: "Qui a fondé Microsoft ?", a: ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Larry Page"], c: 1},
+                {q: "Que signifie 'WWW' ?", a: ["World Wide Web", "World Wide Website", "Web Wide World", "Website Wide World"], c: 0},
+                {q: "En quelle année a été créé Facebook ?", a: ["2003", "2004", "2005", "2006"], c: 1},
+                {q: "Quel langage de programmation a été créé par Guido van Rossum ?", a: ["Java", "Python", "C++", "JavaScript"], c: 1},
+                {q: "Que signifie 'CPU' ?", a: ["Computer Processing Unit", "Central Processing Unit", "Core Processing Unit", "Central Program Unit"], c: 1},
+                {q: "Quel réseau social utilise des 'tweets' ?", a: ["Facebook", "Twitter", "Instagram", "LinkedIn"], c: 1},
+                {q: "Combien de bits y a-t-il dans un octet ?", a: ["6", "7", "8", "9"], c: 2},
+                {q: "Quel est le système d'exploitation mobile de Google ?", a: ["iOS", "Android", "Windows Phone", "BlackBerry"], c: 1},
+                {q: "Qui a inventé le World Wide Web ?", a: ["Bill Gates", "Steve Jobs", "Tim Berners-Lee", "Mark Zuckerberg"], c: 2},
+                {q: "Que signifie 'HTML' ?", a: ["High Tech Modern Language", "HyperText Markup Language", "Home Tool Markup Language", "HyperText Modern Language"], c: 1}
+            ],
+            Art: [
+                {q: "Qui a peint 'La Joconde' ?", a: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Michel-Ange"], c: 1},
+                {q: "Dans quel musée se trouve 'La Joconde' ?", a: ["Musée d'Orsay", "Louvre", "Musée Picasso", "Centre Pompidou"], c: 1},
+                {q: "Qui a peint 'La Nuit étoilée' ?", a: ["Vincent van Gogh", "Claude Monet", "Pablo Picasso", "Salvador Dalí"], c: 0},
+                {q: "Quel mouvement artistique Pablo Picasso a-t-il cofondé ?", a: ["Impressionnisme", "Surréalisme", "Cubisme", "Fauvisme"], c: 2},
+                {q: "Qui a sculpté 'Le Penseur' ?", a: ["Michel-Ange", "Auguste Rodin", "Alberto Giacometti", "Constantin Brâncuși"], c: 1},
+                {q: "Dans quelle ville se trouve le musée du Prado ?", a: ["Barcelone", "Madrid", "Séville", "Valence"], c: 1},
+                {q: "Qui a peint 'Guernica' ?", a: ["Salvador Dalí", "Joan Miró", "Pablo Picasso", "Francisco Goya"], c: 2},
+                {q: "Quel peintre a coupé son oreille ?", a: ["Paul Gauguin", "Vincent van Gogh", "Henri de Toulouse-Lautrec", "Paul Cézanne"], c: 1},
+                {q: "Qui a peint le plafond de la Chapelle Sixtine ?", a: ["Leonardo da Vinci", "Raphaël", "Michel-Ange", "Le Caravage"], c: 2},
+                {q: "Quel mouvement artistique est né en France vers 1870 ?", a: ["Romantisme", "Impressionnisme", "Réalisme", "Symbolisme"], c: 1}
+            ],
             Gastronomie: [
                 {q: "De quel pays vient la paella ?", a: ["Italie", "Portugal", "Espagne", "France"], c: 2},
                 {q: "Quel fromage utilise-t-on traditionnellement pour la pizza Margherita ?", a: ["Parmesan", "Gorgonzola", "Mozzarella", "Ricotta"], c: 2},
@@ -500,8 +593,6 @@
         let customQuiz = null;
         let customQuestionCount = 0;
         let activeThemes = Object.keys(QUESTIONS_DB);
-        let gameStarted = false;
-        let localPlayerAdded = false;
 
         // Sons
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -549,12 +640,6 @@
                         ctx.fillRect(i * 10, j * 10, 10, 10);
                     }
                 }
-        // Gestion du QR Code
-        function loadQrImage() {
-            const img = document.getElementById('qrcodeImage');
-            const saved = loadFromStorage('qrCodeImage');
-            if (saved) {
-                img.src = saved;
             }
             
             // Coins de référence
@@ -572,18 +657,6 @@
             ctx.fillRect(20, 20, 30, 30);
             ctx.fillRect(100, 20, 30, 30);
             ctx.fillRect(20, 100, 30, 30);
-        }
-
-        function handleQrFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = e.target.result;
-                document.getElementById('qrcodeImage').src = data;
-                saveToStorage('qrCodeImage', data);
-            };
-            reader.readAsDataURL(file);
         }
 
         // Gestion du stockage local
@@ -609,7 +682,20 @@
 
         // Gestion des scores
         function saveScore(name, score, theme) {
-@@ -699,61 +701,95 @@
+            const leaderboard = loadFromStorage('leaderboard', []);
+            leaderboard.push({
+                name: name,
+                score: score,
+                theme: theme,
+                date: new Date().toLocaleDateString()
+            });
+            
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard.splice(QUIZ_CONFIG.maxLeaderboardEntries);
+            
+            saveToStorage('leaderboard', leaderboard);
+            updateLeaderboard();
+        }
 
         function updateLeaderboard() {
             const leaderboard = loadFromStorage('leaderboard', []);
@@ -635,40 +721,6 @@
             }
         }
 
-        // Gestion des connexions
-        function connectPlayer() {
-            if (!playerName || localPlayerAdded) return;
-            let players = loadFromStorage('connectedPlayers', []);
-            if (!players.includes(playerName)) {
-                players.push(playerName);
-                saveToStorage('connectedPlayers', players);
-            }
-            localPlayerAdded = true;
-            updatePlayerCount();
-        }
-
-        function disconnectPlayer() {
-            if (!localPlayerAdded) return;
-            let players = loadFromStorage('connectedPlayers', []);
-            players = players.filter(p => p !== playerName);
-            saveToStorage('connectedPlayers', players);
-            updatePlayerCount();
-        }
-
-        function updatePlayerCount() {
-            const players = loadFromStorage('connectedPlayers', []);
-            document.getElementById('playerCount').textContent = `${players.length} joueurs connectés`;
-        }
-
-        function checkForGameStart() {
-            if (gameStarted) return;
-            const info = loadFromStorage('quizStart');
-            if (info && info.theme) {
-                gameStarted = true;
-                startQuiz(info.theme);
-            }
-        }
-
         // Gestion des thèmes
         function updateThemesDisplay() {
             const grid = document.getElementById('themesGrid');
@@ -680,8 +732,6 @@
                 button.textContent = theme;
                 button.disabled = !activeThemes.includes(theme);
                 button.onclick = () => startQuiz(theme);
-                button.disabled = !activeThemes.includes(theme) || !isAdmin;
-                button.onclick = () => adminStartQuiz(theme);
                 grid.appendChild(button);
             });
         }
@@ -707,7 +757,152 @@
             } else {
                 activeThemes.push(theme);
             }
-@@ -906,56 +942,82 @@
+            saveToStorage('activeThemes', activeThemes);
+            updateThemesDisplay();
+        }
+
+        // Gestion des fonds d'écran
+        function showBackgroundManager() {
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('backgroundManager').classList.remove('hidden');
+            
+            const container = document.getElementById('themeBackgrounds');
+            container.innerHTML = Object.keys(QUESTIONS_DB).map(theme => 
+                `<div class="input-group">
+                    <label>${theme} :</label>
+                    <input type="file" id="bg_${theme}" class="file-input" accept="image/jpeg,image/jpg" 
+                           onchange="changeBackground('${theme}')">
+                    <label for="bg_${theme}" class="file-label">Choisir une image</label>
+                </div>`
+            ).join('');
+        }
+
+        function changeBackground(type) {
+            const input = document.getElementById(type === 'home' ? 'homeBackground' : `bg_${type}`);
+            const file = input.files[0];
+            
+            if (file && file.type.includes('jpeg')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    if (type === 'home') {
+                        saveToStorage('homeBackground', imageUrl);
+                        updateBackgroundImage();
+                    } else {
+                        saveToStorage(`background_${type}`, imageUrl);
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Veuillez sélectionner un fichier JPG valide.');
+            }
+        }
+
+        function updateBackgroundImage(theme = null) {
+            const overlay = document.getElementById('backgroundOverlay');
+            let backgroundUrl;
+            
+            if (theme && theme !== 'home') {
+                backgroundUrl = loadFromStorage(`background_${theme}`);
+            } else {
+                backgroundUrl = loadFromStorage('homeBackground');
+            }
+            
+            if (backgroundUrl) {
+                overlay.style.backgroundImage = `url(${backgroundUrl})`;
+            } else {
+                overlay.style.backgroundImage = '';
+            }
+        }
+
+        // Gestion du quiz personnalisé
+        function showCustomQuizCreator() {
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('customQuizCreator').classList.remove('hidden');
+            
+            customQuiz = { title: '', questions: [] };
+            customQuestionCount = 0;
+            document.getElementById('customQuestions').innerHTML = '';
+            document.getElementById('customQuizTitle').value = '';
+            
+            addCustomQuestion();
+        }
+
+        function addCustomQuestion() {
+            if (customQuestionCount >= 10) {
+                alert('Maximum 10 questions par quiz personnalisé.');
+                return;
+            }
+            
+            customQuestionCount++;
+            const container = document.getElementById('customQuestions');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'admin-panel';
+            questionDiv.innerHTML = `
+                <h4>Question ${customQuestionCount}</h4>
+                <div class="input-group">
+                    <label>Question :</label>
+                    <input type="text" id="q${customQuestionCount}" placeholder="Votre question..." maxlength="200">
+                </div>
+                <div class="input-group">
+                    <label>Réponse A :</label>
+                    <input type="text" id="q${customQuestionCount}a1" placeholder="Première réponse..." maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Réponse B :</label>
+                    <input type="text" id="q${customQuestionCount}a2" placeholder="Deuxième réponse..." maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Réponse C :</label>
+                    <input type="text" id="q${customQuestionCount}a3" placeholder="Troisième réponse..." maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Réponse D :</label>
+                    <input type="text" id="q${customQuestionCount}a4" placeholder="Quatrième réponse..." maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label>Bonne réponse :</label>
+                    <select id="q${customQuestionCount}correct">
+                        <option value="0">A</option>
+                        <option value="1">B</option>
+                        <option value="2">C</option>
+                        <option value="3">D</option>
+                    </select>
+                </div>
+                <button class="btn btn-danger" onclick="removeCustomQuestion(${customQuestionCount})">Supprimer</button>
+            `;
+            container.appendChild(questionDiv);
+            
+            if (customQuestionCount >= 10) {
+                document.getElementById('addQuestionBtn').style.display = 'none';
+            }
+        }
+
+        function removeCustomQuestion(num) {
+            const questionDiv = document.querySelector(`#q${num}`).closest('.admin-panel');
+            questionDiv.remove();
+            customQuestionCount--;
+            
+            document.getElementById('addQuestionBtn').style.display = 'block';
+            
+            // Renuméroter les questions
+            const questions = document.querySelectorAll('#customQuestions .admin-panel');
+            questions.forEach((div, index) => {
+                const newNum = index + 1;
+                div.querySelector('h4').textContent = `Question ${newNum}`;
+            });
+        }
+
+        function startCustomQuiz() {
+            const title = document.getElementById('customQuizTitle').value.trim();
+            if (!title) {
+                alert('Veuillez saisir un titre pour le quiz.');
+                return;
+            }
+            
+            const questions = [];
+            for (let i = 1; i <= customQuestionCount; i++) {
+                const questionEl = document.getElementById(`q${i}`);
                 if (!questionEl) continue;
                 
                 const question = questionEl.value.trim();
@@ -733,38 +928,12 @@
             startQuiz('Personnalisé');
         }
 
-        function adminStartQuiz(theme) {
-            if (!isAdmin) {
-                alert("Seul l'administrateur peut démarrer la partie.");
-                return;
-            }
-            saveToStorage('quizStart', { theme });
-            gameStarted = true;
-            startQuiz(theme);
-        }
-
-        function adminStartRandomQuiz() {
-            if (!isAdmin) {
-                alert("Seul l'administrateur peut démarrer la partie.");
-                return;
-            }
-            const availableThemes = activeThemes.filter(t => QUESTIONS_DB[t]);
-            if (availableThemes.length === 0) {
-                alert('Aucun thème disponible !');
-                return;
-            }
-            const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
-            adminStartQuiz(randomTheme);
-        }
-
         // Gestion principale du quiz
         function startQuiz(theme) {
             if (!playerName) {
                 alert('Veuillez entrer votre prénom !');
                 return;
             }
-
-            gameStarted = true;
             
             let questions;
             if (theme === 'Personnalisé' && customQuiz) {
@@ -790,7 +959,115 @@
             currentQuestionIndex = 0;
             score = 0;
             
-@@ -1071,52 +1133,65 @@
+            document.getElementById('homeScreen').classList.add('hidden');
+            document.getElementById('customQuizCreator').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            
+            showQuestion();
+        }
+
+        function startRandomQuiz() {
+            const availableThemes = activeThemes.filter(theme => QUESTIONS_DB[theme]);
+            if (availableThemes.length === 0) {
+                alert('Aucun thème disponible !');
+                return;
+            }
+            
+            const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+            startQuiz(randomTheme);
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= currentQuiz.questions.length) {
+                endQuiz();
+                return;
+            }
+            
+            const question = currentQuiz.questions[currentQuestionIndex];
+            const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100;
+            
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('questionText').textContent = question.q;
+            
+            const answersContainer = document.getElementById('answersContainer');
+            answersContainer.innerHTML = question.a.map((answer, index) => 
+                `<button class="answer-btn" onclick="selectAnswer(${index})">${String.fromCharCode(65 + index)}) ${answer}</button>`
+            ).join('');
+            
+            startTimer();
+        }
+
+        function startTimer() {
+            timeLeft = QUIZ_CONFIG.timePerQuestion;
+            updateTimerDisplay();
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    selectAnswer(-1); // Temps écoulé
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = timeLeft;
+            timerEl.style.color = timeLeft <= 2 ? '#ff0044' : '#ff006e';
+        }
+
+        function selectAnswer(answerIndex) {
+            clearInterval(timer);
+            
+            const question = currentQuiz.questions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === question.c) {
+                    btn.classList.add('correct');
+                } else if (index === answerIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+            
+            const isCorrect = answerIndex === question.c;
+            const wasTimeout = answerIndex === -1;
+            
+            currentQuiz.answers.push({
+                question: question.q,
+                userAnswer: wasTimeout ? 'Temps écoulé' : question.a[answerIndex],
+                correctAnswer: question.a[question.c],
+                isCorrect: isCorrect
+            });
+            
+            if (isCorrect) {
+                score++;
+                playCorrectSound();
+            } else {
+                playIncorrectSound();
+            }
+            
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 2000);
+        }
+
+        function endQuiz() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            document.getElementById('finalScore').textContent = `Score: ${score}/${currentQuiz.questions.length}`;
+            
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = currentQuiz.answers.map(answer => 
+                `<div class="result-item ${answer.isCorrect ? 'result-correct' : 'result-incorrect'}">
+                    <div>
+                        <strong>Q:</strong> ${answer.question}<br>
+                        <strong>Votre réponse:</strong> ${answer.userAnswer}<br>
                         <strong>Bonne réponse:</strong> ${answer.correctAnswer}
                     </div>
                     <div>${answer.isCorrect ? '✅' : '❌'}</div>
@@ -817,21 +1094,17 @@
             playerName = nameInput.value.trim();
             isAdmin = playerName.toLowerCase() === 'admin';
             
-
             const adminPanel = document.getElementById('adminPanel');
             if (isAdmin) {
                 adminPanel.classList.remove('hidden');
             } else {
                 adminPanel.classList.add('hidden');
             }
-            connectPlayer();
-            updateThemesDisplay();
         }
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             generateQR();
-            loadQrImage();
             updateLeaderboard();
             
             // Charger les données sauvegardées
@@ -839,22 +1112,9 @@
             updateThemesDisplay();
             updateBackgroundImage();
             
-
-            updatePlayerCount();
-
             // Événements
             document.getElementById('playerName').addEventListener('input', checkAdminMode);
-            document.getElementById('qrFileInput').addEventListener('change', handleQrFile);
             
-            document.getElementById('playerName').addEventListener('input', checkAdminMode);
-
-            window.addEventListener('beforeunload', disconnectPlayer);
-            window.addEventListener('storage', () => {
-                updatePlayerCount();
-                checkForGameStart();
-            });
-            setInterval(checkForGameStart, 1000);
-
             console.log('Oliday Quizz Pro initialisé !');
         });
     </script>
