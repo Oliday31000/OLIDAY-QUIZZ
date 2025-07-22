@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Oliday Quizz Pro - Multijoueur</title>
+  <title>Oliday Quizz Pro - Multijoueur Live</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body {
@@ -55,39 +55,35 @@
     .answer.wrong {
       background-color: #ff3333;
     }
-    .admin-panel {
-      border-top: 2px solid #00ffff;
-      margin-top: 30px;
-      padding-top: 20px;
-    }
     #qrPreview {
       max-width: 150px;
       margin-top: 10px;
       border: 2px solid #00ffff;
       border-radius: 8px;
     }
+    .admin-panel {
+      border-top: 2px solid #00ffff;
+      margin-top: 30px;
+      padding-top: 20px;
+    }
   </style>
 </head>
 <body>
   <div class="screen">
-    <h1>Oliday Quizz Pro - Multijoueur</h1>
+    <h1>Oliday Quizz Pro - Multijoueur Live</h1>
     <input type="text" id="playerName" placeholder="Votre prénom..." />
-    <button class="btn" onclick="join()">Rejoindre</button>
+    <button class="btn" onclick="joinGame()">Rejoindre</button>
 
     <div id="adminPanel" class="admin-panel" style="display:none">
       <h2>Panneau Administrateur</h2>
-      <label>Nombre de joueurs :
-        <input type="number" id="playerLimit" min="1" max="50" />
-      </label><br/>
       <label>QR code personnalisé :
         <input type="file" id="qrUpload" accept="image/*" onchange="handleQRUpload(event)" />
         <img id="qrPreview" />
       </label><br/>
-      <h3>Thèmes autorisés</h3>
-      <div id="themes"></div>
-      <button class="btn" onclick="saveConfig()">Sauvegarder la config</button>
+      <button class="btn" onclick="launchGame()">Lancer la partie</button>
     </div>
 
+    <div id="qrDisplayArea" style="text-align:center; margin-top:20px;"></div>
     <div id="quizArea" style="display:none">
       <h2 id="quizTitle"></h2>
       <div id="questionContainer" class="question-box"></div>
@@ -96,116 +92,81 @@
 
     <h3>Classement</h3>
     <ul id="leaderboard"></ul>
-
-    <div id="qrDisplayArea" style="text-align:center; margin-top:20px;"></div>
   </div>
 
   <script>
     const supabase = supabase.createClient("https://YOUR_PROJECT_URL.supabase.co", "YOUR_ANON_KEY");
+    let isAdmin = false, name = "", score = 0, questionIndex = 0, timer;
+    let currentQR = "", gameId = "oliday-quizz";
 
-    let isAdmin = false;
-    let name = "";
-    let currentQR = "";
-    let score = 0;
-    let questionIndex = 0;
-    let selectedQuestions = [];
-    let timer;
-
-    const allThemes = ["Histoire", "Géographie", "Sciences", "Sport", "Cinéma", "Musique", "Littérature", "Technologie", "Nature", "Culture"];
-
-    const questionsBank = {
-      "Histoire": [
-        { q: "Qui a fondé l'Empire romain ?", a: ["Jules César", "Auguste", "Néron", "Caligula"], r: 1 },
-        { q: "En quelle année la Révolution française a-t-elle commencé ?", a: ["1776", "1789", "1804", "1765"], r: 1 }
-      ],
-      "Géographie": [
-        { q: "Quel est le plus long fleuve du monde ?", a: ["Nil", "Amazone", "Yangtsé", "Mississippi"], r: 1 },
-        { q: "Quelle est la capitale de l’Australie ?", a: ["Sydney", "Melbourne", "Canberra", "Brisbane"], r: 2 }
-      ]
-    };
-
-    function join() {
+    async function joinGame() {
       name = document.getElementById("playerName").value.trim();
       if (!name) return alert("Entrez un prénom.");
       isAdmin = name.toLowerCase() === "admin";
       document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
-      loadConfig();
-      listenScores();
-      if (!isAdmin) startQuiz();
-    }
-
-    async function loadConfig() {
-      const { data } = await supabase.from("config").select("*").single();
-      if (data) {
-        document.getElementById("playerLimit").value = data.player_limit || 10;
-        const container = document.getElementById("themes");
-        container.innerHTML = "";
-        allThemes.forEach(theme => {
-          const input = document.createElement("input");
-          input.type = "checkbox";
-          input.id = "theme_" + theme;
-          input.checked = data.theme_list?.includes(theme);
-          container.appendChild(input);
-          container.appendChild(document.createTextNode(" " + theme));
-          container.appendChild(document.createElement("br"));
-        });
-        if (data.qr_url) {
-          currentQR = data.qr_url;
-          document.getElementById("qrPreview").src = currentQR;
-          document.getElementById("qrDisplayArea").innerHTML =
-            '<img src="' + currentQR + '" alt="QR Code" style="max-width:150px;border:2px solid #00ffff;border-radius:8px;" />';
-        }
+      const { data } = await supabase.from("config").select("*").eq("id", 1).single();
+      if (data?.qr_url) {
+        currentQR = data.qr_url;
+        document.getElementById("qrDisplayArea").innerHTML = '<img src="' + currentQR + '" id="qrPreview" />';
       }
+      if (!isAdmin) listenForStart();
+      updateLeaderboard();
     }
 
-    async function saveConfig() {
-      const player_limit = parseInt(document.getElementById("playerLimit").value);
-      const selectedThemes = allThemes.filter(t => document.getElementById("theme_" + t).checked);
-      await supabase.from("config").update({
-        player_limit,
-        theme_list: selectedThemes,
-        qr_url: currentQR
-      }).eq("id", 1);
-      alert("Config enregistrée !");
-    }
-
-    function handleQRUpload(event) {
-      const file = event.target.files[0];
+    async function handleQRUpload(e) {
+      const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = function(e) {
-        currentQR = e.target.result;
+      reader.onload = async function(evt) {
+        currentQR = evt.target.result;
         document.getElementById("qrPreview").src = currentQR;
+        await supabase.from("config").upsert({ id: 1, qr_url: currentQR });
       };
-      if (file) reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
     }
 
-    function startQuiz() {
-      const theme = allThemes[Math.floor(Math.random() * allThemes.length)];
-      selectedQuestions = questionsBank[theme].sort(() => 0.5 - Math.random()).slice(0, 5);
+    async function launchGame() {
+      const theme = "Histoire";
+      const questions = [
+        { q: "Qui a fondé l'Empire romain ?", a: ["Jules César", "Auguste", "Néron", "Caligula"], r: 1 },
+        { q: "Année de la Révolution française ?", a: ["1776", "1789", "1804", "1765"], r: 1 }
+      ];
+      await supabase.from("games").upsert({ id: gameId, started: true, questions });
+    }
+
+    async function listenForStart() {
+      supabase.channel('game_start')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'games' }, async () => {
+          const { data } = await supabase.from("games").select("*").eq("id", gameId).single();
+          if (data?.started) startQuiz(data.questions);
+        })
+        .subscribe();
+    }
+
+    function startQuiz(questions) {
       questionIndex = 0;
       score = 0;
-      document.getElementById("quizTitle").innerText = `Thème : ${theme}`;
+      document.getElementById("quizTitle").innerText = `Thème : Histoire`;
       document.getElementById("quizArea").style.display = "block";
-      showQuestion();
+      showQuestion(questions);
     }
 
-    function showQuestion() {
+    function showQuestion(questions) {
       clearTimeout(timer);
-      if (questionIndex >= selectedQuestions.length) return endQuiz();
-      const q = selectedQuestions[questionIndex];
+      if (questionIndex >= questions.length) return endQuiz();
+      const q = questions[questionIndex];
       const container = document.getElementById("questionContainer");
       container.innerHTML = `<p>${q.q}</p>`;
       q.a.forEach((opt, i) => {
         const btn = document.createElement("div");
         btn.className = "answer";
         btn.innerText = opt;
-        btn.onclick = () => handleAnswer(i);
+        btn.onclick = () => handleAnswer(i, q);
         container.appendChild(btn);
       });
-      startTimer();
+      startTimer(questions);
     }
 
-    function startTimer() {
+    function startTimer(questions) {
       let time = 5;
       document.getElementById("timerDisplay").innerText = `Temps restant : ${time}s`;
       timer = setInterval(() => {
@@ -214,14 +175,13 @@
         if (time <= 0) {
           clearInterval(timer);
           questionIndex++;
-          showQuestion();
+          showQuestion(questions);
         }
       }, 1000);
     }
 
-    function handleAnswer(i) {
+    function handleAnswer(i, q) {
       clearInterval(timer);
-      const q = selectedQuestions[questionIndex];
       const answers = document.querySelectorAll(".answer");
       answers.forEach((el, idx) => {
         el.classList.add(idx === q.r ? "correct" : (idx === i ? "wrong" : ""));
@@ -229,20 +189,13 @@
       if (i === q.r) score++;
       setTimeout(() => {
         questionIndex++;
-        showQuestion();
+        showQuestion([q]);
       }, 1000);
     }
 
-    function endQuiz() {
+    async function endQuiz() {
       document.getElementById("quizArea").innerHTML = `<h2>Fin du quiz ! Score : ${score}</h2>`;
-      supabase.from("players").insert([{ name, score }]);
-    }
-
-    function listenScores() {
-      supabase.channel("players-channel")
-        .on("postgres_changes", { event: "*", schema: "public", table: "players" }, payload => {
-          updateLeaderboard();
-        }).subscribe();
+      await supabase.from("players").insert([{ name, score }]);
       updateLeaderboard();
     }
 
