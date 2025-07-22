@@ -1,1122 +1,256 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oliday Quizz Pro</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Orbitron', 'Courier New', monospace;
-            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
-            color: #00ffff;
-            overflow-x: hidden;
-            min-height: 100vh;
-            background-attachment: fixed;
-        }
-
-        .background-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.3;
-            z-index: -1;
-            transition: background-image 0.5s ease-in-out;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            font-size: 3rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            background: linear-gradient(45deg, #ff006e, #00ffff, #ff006e);
-            background-size: 200% 200%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: neonGlow 2s ease-in-out infinite alternate;
-            text-shadow: 0 0 30px #00ffff;
-        }
-
-        @keyframes neonGlow {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(90deg); }
-        }
-
-        .screen {
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #00ffff;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #ff006e;
-            font-weight: bold;
-        }
-
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
-            color: #00ffff;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: #ff006e;
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
-        }
-
-        .btn {
-            padding: 15px 30px;
-            background: linear-gradient(45deg, #ff006e, #ff4081);
-            border: none;
-            border-radius: 15px;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 5px;
-            box-shadow: 0 0 20px rgba(255, 0, 110, 0.3);
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 30px rgba(255, 0, 110, 0.6);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(45deg, #00ffff, #0080ff);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-        }
-
-        .btn-secondary:hover {
-            box-shadow: 0 5px 30px rgba(0, 255, 255, 0.6);
-        }
-
-        .btn-success {
-            background: linear-gradient(45deg, #00ff88, #00cc66);
-        }
-
-        .btn-danger {
-            background: linear-gradient(45deg, #ff0044, #cc0033);
-        }
-
-        .themes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .theme-btn {
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 110, 0.1));
-            border: 2px solid #00ffff;
-            border-radius: 15px;
-            color: #00ffff;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-
-        .theme-btn:hover {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(255, 0, 110, 0.3));
-            transform: scale(1.05);
-        }
-
-        .theme-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .leaderboard {
-            background: rgba(0, 0, 0, 0.6);
-            border: 2px solid #ff006e;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .leaderboard h3 {
-            color: #ff006e;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
-        }
-
-        .question-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .question {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #00ffff;
-        }
-
-        .answers {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .answer-btn {
-            padding: 20px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 2px solid #00ffff;
-            border-radius: 10px;
-            color: #00ffff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 16px;
-        }
-
-        .answer-btn:hover {
-            background: rgba(0, 255, 255, 0.3);
-        }
-
-        .answer-btn.correct {
-            background: rgba(0, 255, 0, 0.3);
-            border-color: #00ff00;
-        }
-
-        .answer-btn.incorrect {
-            background: rgba(255, 0, 0, 0.3);
-            border-color: #ff0000;
-        }
-
-        .timer {
-            font-size: 2rem;
-            color: #ff006e;
-            text-align: center;
-            margin: 20px 0;
-            font-weight: bold;
-        }
-
-        .progress {
-            background: rgba(0, 0, 0, 0.5);
-            height: 10px;
-            border-radius: 5px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #00ffff, #ff006e);
-            transition: width 0.3s ease;
-        }
-
-        .admin-panel {
-            background: rgba(255, 0, 110, 0.1);
-            border: 2px solid #ff006e;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .admin-panel h3 {
-            color: #ff006e;
-            margin-bottom: 15px;
-        }
-
-        .qr-code {
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            display: inline-block;
-        }
-
-        .qr-code canvas {
-            border-radius: 5px;
-        }
-
-        .results {
-            text-align: center;
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin: 5px 0;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            border-left: 4px solid;
-        }
-
-        .result-correct {
-            border-left-color: #00ff00;
-        }
-
-        .result-incorrect {
-            border-left-color: #ff0000;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .file-label {
-            display: inline-block;
-            padding: 10px 20px;
-            background: linear-gradient(45deg, #00ffff, #0080ff);
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .file-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            .answers {
-                grid-template-columns: 1fr;
-            }
-            
-            .themes-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .logo {
-                font-size: 2rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Oliday Quizz Pro - Multijoueur</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+      color: #00ffff;
+      margin: 0;
+      padding: 0;
+    }
+    .screen {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      text-align: center;
+    }
+    input, button {
+      font-family: 'Orbitron', sans-serif;
+    }
+    .btn {
+      padding: 10px 20px;
+      background: #00ffff;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .question-box {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #00ffff;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .answer {
+      margin: 5px 0;
+      padding: 10px;
+      background: #222;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .answer.correct {
+      background-color: #00cc66;
+    }
+    .answer.wrong {
+      background-color: #ff3333;
+    }
+    .admin-panel {
+      border-top: 2px solid #00ffff;
+      margin-top: 30px;
+      padding-top: 20px;
+    }
+    #qrPreview {
+      max-width: 150px;
+      margin-top: 10px;
+      border: 2px solid #00ffff;
+      border-radius: 8px;
+    }
+  </style>
 </head>
 <body>
-    <div class="background-overlay" id="backgroundOverlay"></div>
-    
-    <div class="container">
-        <div class="header">
-            <h1 class="logo">Oliday Quizz Pro</h1>
-        </div>
+  <div class="screen">
+    <h1>Oliday Quizz Pro - Multijoueur</h1>
+    <input type="text" id="playerName" placeholder="Votre prénom..." />
+    <button class="btn" onclick="join()">Rejoindre</button>
 
-        <!-- Écran d'accueil -->
-        <div id="homeScreen" class="screen">
-            <div class="qr-code">
-                <canvas id="qrcode" width="150" height="150"></canvas>
-                <p style="color: #000; margin-top: 10px;">Scannez pour jouer !</p>
-            </div>
-
-            <div class="input-group">
-                <label for="playerName">Entrez votre prénom :</label>
-                <input type="text" id="playerName" placeholder="Votre prénom..." maxlength="20">
-            </div>
-
-            <div id="adminPanel" class="admin-panel hidden">
-                <h3>Panneau Administrateur</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                    <button class="btn btn-danger" onclick="resetLeaderboard()">Reset Classement</button>
-                    <button class="btn btn-secondary" onclick="showThemeManager()">Gérer Thèmes</button>
-                    <button class="btn btn-secondary" onclick="showBackgroundManager()">Changer Fonds</button>
-                    <button class="btn btn-success" onclick="showCustomQuizCreator()">Quiz Personnalisé</button>
-                </div>
-            </div>
-
-            <div class="leaderboard">
-                <h3>🏆 Top 5 Scores</h3>
-                <div id="leaderboardList"></div>
-            </div>
-
-            <div class="themes-grid" id="themesGrid">
-                <!-- Les thèmes seront générés dynamiquement -->
-            </div>
-
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-success" onclick="startRandomQuiz()">🎲 Thème Aléatoire</button>
-            </div>
-        </div>
-
-        <!-- Écran de quiz -->
-        <div id="quizScreen" class="screen hidden">
-            <div class="progress">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            
-            <div class="timer" id="timer">5</div>
-            
-            <div class="question-container">
-                <h2 id="currentTheme"></h2>
-                <div class="question" id="questionText"></div>
-                <div class="answers" id="answersContainer"></div>
-            </div>
-        </div>
-
-        <!-- Écran des résultats -->
-        <div id="resultsScreen" class="screen hidden">
-            <div class="results">
-                <h2>Résultats du Quiz</h2>
-                <h3 id="finalScore"></h3>
-                <div id="resultsList"></div>
-                <button class="btn" onclick="goHome()">Retour au Menu</button>
-            </div>
-        </div>
-
-        <!-- Gestionnaire de thèmes -->
-        <div id="themeManager" class="screen hidden">
-            <h2>Gestionnaire de Thèmes</h2>
-            <div id="themesList"></div>
-            <button class="btn btn-secondary" onclick="goHome()">Retour</button>
-        </div>
-
-        <!-- Gestionnaire de fonds -->
-        <div id="backgroundManager" class="screen hidden">
-            <h2>Gestionnaire de Fonds d'Écran</h2>
-            <div class="input-group">
-                <label>Fond d'accueil :</label>
-                <input type="file" id="homeBackground" class="file-input" accept="image/jpeg,image/jpg" onchange="changeBackground('home')">
-                <label for="homeBackground" class="file-label">Choisir une image</label>
-            </div>
-            
-            <div id="themeBackgrounds"></div>
-            
-            <button class="btn btn-secondary" onclick="goHome()">Retour</button>
-        </div>
-
-        <!-- Créateur de quiz personnalisé -->
-        <div id="customQuizCreator" class="screen hidden">
-            <h2>Créer un Quiz Personnalisé</h2>
-            
-            <div class="input-group">
-                <label for="customQuizTitle">Titre du Quiz :</label>
-                <input type="text" id="customQuizTitle" placeholder="Titre de votre quiz..." maxlength="50">
-            </div>
-
-            <div id="customQuestions">
-                <!-- Les questions seront ajoutées dynamiquement -->
-            </div>
-
-            <div style="text-align: center; margin: 20px 0;">
-                <button class="btn btn-success" onclick="addCustomQuestion()" id="addQuestionBtn">Ajouter Question</button>
-                <button class="btn" onclick="startCustomQuiz()">Lancer Quiz</button>
-                <button class="btn btn-secondary" onclick="goHome()">Annuler</button>
-            </div>
-        </div>
+    <div id="adminPanel" class="admin-panel" style="display:none">
+      <h2>Panneau Administrateur</h2>
+      <label>Nombre de joueurs :
+        <input type="number" id="playerLimit" min="1" max="50" />
+      </label><br/>
+      <label>QR code personnalisé :
+        <input type="file" id="qrUpload" accept="image/*" onchange="handleQRUpload(event)" />
+        <img id="qrPreview" />
+      </label><br/>
+      <h3>Thèmes autorisés</h3>
+      <div id="themes"></div>
+      <button class="btn" onclick="saveConfig()">Sauvegarder la config</button>
     </div>
 
-    <script>
-        // Configuration et données du jeu
-        const QUIZ_CONFIG = {
-            questionsPerQuiz: 5,
-            timePerQuestion: 5,
-            maxLeaderboardEntries: 5
-        };
+    <div id="quizArea" style="display:none">
+      <h2 id="quizTitle"></h2>
+      <div id="questionContainer" class="question-box"></div>
+      <div id="timerDisplay"></div>
+    </div>
 
-        // Base de données des questions
-        const QUESTIONS_DB = {
-            Histoire: [
-                {q: "En quelle année a eu lieu la Révolution française ?", a: ["1789", "1792", "1776", "1804"], c: 0},
-                {q: "Qui était le premier empereur de France ?", a: ["Louis XIV", "Napoléon Bonaparte", "Charlemagne", "Henri IV"], c: 1},
-                {q: "Quelle bataille a marqué la fin de Napoléon ?", a: ["Austerlitz", "Waterloo", "Wagram", "Iéna"], c: 1},
-                {q: "En quelle année la Première Guerre mondiale a-t-elle commencé ?", a: ["1912", "1914", "1916", "1918"], c: 1},
-                {q: "Qui était le roi de France pendant la Révolution ?", a: ["Louis XIV", "Louis XV", "Louis XVI", "Louis XVII"], c: 2},
-                {q: "Quelle civilisation a construit Machu Picchu ?", a: ["Aztèques", "Mayas", "Incas", "Olmèques"], c: 2},
-                {q: "En quelle année le mur de Berlin est-il tombé ?", a: ["1987", "1988", "1989", "1990"], c: 2},
-                {q: "Qui était Jules César ?", a: ["Un empereur romain", "Un général et homme politique romain", "Un philosophe grec", "Un pharaon égyptien"], c: 1},
-                {q: "Quelle guerre a opposé les États du Nord et du Sud américains ?", a: ["Guerre de Sécession", "Guerre d'Indépendance", "Guerre de 1812", "Guerre hispano-américaine"], c: 0},
-                {q: "En quelle année Christophe Colomb a-t-il découvert l'Amérique ?", a: ["1490", "1491", "1492", "1493"], c: 2}
-            ],
-            Géographie: [
-                {q: "Quelle est la capitale de l'Australie ?", a: ["Sydney", "Melbourne", "Canberra", "Perth"], c: 2},
-                {q: "Quel est le plus long fleuve du monde ?", a: ["Amazone", "Nil", "Mississippi", "Yangtsé"], c: 1},
-                {q: "Combien de continents y a-t-il ?", a: ["5", "6", "7", "8"], c: 2},
-                {q: "Quelle est la plus haute montagne du monde ?", a: ["K2", "Everest", "Kangchenjunga", "Makalu"], c: 1},
-                {q: "Dans quel pays se trouve Machu Picchu ?", a: ["Bolivie", "Équateur", "Pérou", "Chili"], c: 2},
-                {q: "Quel océan borde la côte ouest de l'Afrique ?", a: ["Indien", "Atlantique", "Pacifique", "Arctique"], c: 1},
-                {q: "Quelle est la capitale du Canada ?", a: ["Toronto", "Montréal", "Vancouver", "Ottawa"], c: 3},
-                {q: "Quel désert est le plus grand du monde ?", a: ["Sahara", "Gobi", "Antarctique", "Kalahari"], c: 2},
-                {q: "Dans quel pays se trouve la ville de Petra ?", a: ["Égypte", "Jordanie", "Syrie", "Liban"], c: 1},
-                {q: "Quel pays a le plus de fuseaux horaires ?", a: ["Russie", "États-Unis", "Chine", "Canada"], c: 0}
-            ],
-            Sciences: [
-                {q: "Quel est le symbole chimique de l'or ?", a: ["Go", "Au", "Or", "Ag"], c: 1},
-                {q: "Combien de planètes y a-t-il dans notre système solaire ?", a: ["7", "8", "9", "10"], c: 1},
-                {q: "Quelle est la vitesse de la lumière ?", a: ["300 000 km/s", "150 000 km/s", "500 000 km/s", "250 000 km/s"], c: 0},
-                {q: "Qui a découvert la pénicilline ?", a: ["Louis Pasteur", "Alexander Fleming", "Marie Curie", "Charles Darwin"], c: 1},
-                {q: "Quel gaz compose principalement l'atmosphère terrestre ?", a: ["Oxygène", "Azote", "Dioxyde de carbone", "Argon"], c: 1},
-                {q: "Combien d'os a le corps humain adulte ?", a: ["196", "206", "216", "226"], c: 1},
-                {q: "Quelle planète est la plus proche du Soleil ?", a: ["Vénus", "Mercure", "Mars", "Terre"], c: 1},
-                {q: "Quel scientifique a développé la théorie de la relativité ?", a: ["Isaac Newton", "Albert Einstein", "Galilée", "Stephen Hawking"], c: 1},
-                {q: "Quel est l'élément chimique le plus abondant dans l'univers ?", a: ["Hélium", "Hydrogène", "Oxygène", "Carbon"], c: 1},
-                {q: "À quelle température l'eau bout-elle (niveau de la mer) ?", a: ["90°C", "95°C", "100°C", "105°C"], c: 2}
-            ],
-            Sport: [
-                {q: "Combien de joueurs y a-t-il dans une équipe de football ?", a: ["10", "11", "12", "9"], c: 1},
-                {q: "Tous les combien d'années ont lieu les Jeux Olympiques d'été ?", a: ["2 ans", "3 ans", "4 ans", "5 ans"], c: 2},
-                {q: "Dans quel sport utilise-t-on un shuttle ?", a: ["Tennis", "Badminton", "Squash", "Ping-pong"], c: 1},
-                {q: "Combien de sets maximum peut durer un match de tennis masculin en Grand Chelem ?", a: ["3", "4", "5", "6"], c: 2},
-                {q: "Quel pays a remporté la Coupe du Monde de football 2018 ?", a: ["Brésil", "Allemagne", "France", "Argentine"], c: 2},
-                {q: "Dans quel sport évolue-t-on sur un tatami ?", a: ["Karaté", "Judo", "Taekwondo", "Boxe"], c: 1},
-                {q: "Combien de points vaut un panier à 3 points en basketball ?", a: ["2", "3", "4", "5"], c: 1},
-                {q: "Quel nageur a remporté le plus de médailles d'or olympiques ?", a: ["Mark Spitz", "Michael Phelps", "Ian Thorpe", "Ryan Lochte"], c: 1},
-                {q: "Dans quel sport utilise-t-on une raquette et une balle jaune ?", a: ["Badminton", "Squash", "Tennis", "Ping-pong"], c: 2},
-                {q: "Combien de tours fait un coureur de 10 000m sur une piste standard ?", a: ["20", "25", "30", "40"], c: 1}
-            ],
-            Cinéma: [
-                {q: "Qui a réalisé le film 'Titanic' ?", a: ["Steven Spielberg", "James Cameron", "Martin Scorsese", "Christopher Nolan"], c: 1},
-                {q: "Dans quel film trouve-t-on la réplique 'Que la Force soit avec toi' ?", a: ["Star Trek", "Star Wars", "Blade Runner", "Matrix"], c: 1},
-                {q: "Quel acteur joue Jack Sparrow dans 'Pirates des Caraïbes' ?", a: ["Orlando Bloom", "Johnny Depp", "Keira Knightley", "Geoffrey Rush"], c: 1},
-                {q: "Combien d'Oscars le film 'Le Seigneur des Anneaux : Le Retour du Roi' a-t-il remportés ?", a: ["9", "10", "11", "12"], c: 2},
-                {q: "Qui a composé la musique des films Harry Potter ?", a: ["Hans Zimmer", "John Williams", "Howard Shore", "Danny Elfman"], c: 1},
-                {q: "Dans quel film dit-on 'Hakuna Matata' ?", a: ["Le Livre de la Jungle", "Le Roi Lion", "Tarzan", "Pocahontas"], c: 1},
-                {q: "Quel film a remporté l'Oscar du meilleur film en 2020 ?", a: ["1917", "Joker", "Parasite", "Once Upon a Time in Hollywood"], c: 2},
-                {q: "Qui a réalisé 'Pulp Fiction' ?", a: ["Martin Scorsese", "Quentin Tarantino", "David Fincher", "Stanley Kubrick"], c: 1},
-                {q: "Dans quel film trouve-t-on le personnage de Darth Vader ?", a: ["Star Trek", "Star Wars", "Stargate", "Guardians of the Galaxy"], c: 1},
-                {q: "Quel acteur joue Iron Man dans l'univers Marvel ?", a: ["Chris Evans", "Chris Hemsworth", "Robert Downey Jr.", "Mark Ruffalo"], c: 2}
-            ],
-            Musique: [
-                {q: "Combien de cordes a une guitare classique ?", a: ["4", "5", "6", "7"], c: 2},
-                {q: "Quel groupe a chanté 'Bohemian Rhapsody' ?", a: ["The Beatles", "Queen", "Led Zeppelin", "The Rolling Stones"], c: 1},
-                {q: "Dans quel pays est né Mozart ?", a: ["Allemagne", "Autriche", "Suisse", "Italie"], c: 1},
-                {q: "Combien de symphonies Beethoven a-t-il composées ?", a: ["8", "9", "10", "11"], c: 1},
-                {q: "Quel instrument joue Yo-Yo Ma ?", a: ["Violon", "Piano", "Violoncelle", "Flûte"], c: 2},
-                {q: "Qui a composé 'La Flûte enchantée' ?", a: ["Bach", "Beethoven", "Mozart", "Haydn"], c: 2},
-                {q: "Quel groupe britannique a chanté 'Stairway to Heaven' ?", a: ["The Beatles", "Queen", "Led Zeppelin", "Pink Floyd"], c: 2},
-                {q: "Combien de touches noires y a-t-il sur un piano standard ?", a: ["32", "34", "36", "38"], c: 2},
-                {q: "Quel chanteur est surnommé 'The King of Pop' ?", a: ["Elvis Presley", "Michael Jackson", "Prince", "James Brown"], c: 1},
-                {q: "Dans quelle ville est né le jazz ?", a: ["New York", "Chicago", "La Nouvelle-Orléans", "Detroit"], c: 2}
-            ],
-            Littérature: [
-                {q: "Qui a écrit 'Les Misérables' ?", a: ["Victor Hugo", "Émile Zola", "Gustave Flaubert", "Alexandre Dumas"], c: 0},
-                {q: "Dans quel livre trouve-t-on le personnage de Sherlock Holmes ?", a: ["Agatha Christie", "Arthur Conan Doyle", "Edgar Allan Poe", "Raymond Chandler"], c: 1},
-                {q: "Qui a écrit '1984' ?", a: ["Aldous Huxley", "George Orwell", "Ray Bradbury", "Philip K. Dick"], c: 1},
-                {q: "Combien de tomes compte la saga 'Harry Potter' ?", a: ["6", "7", "8", "9"], c: 1},
-                {q: "Qui a écrit 'Le Petit Prince' ?", a: ["Jules Verne", "Antoine de Saint-Exupéry", "Marcel Proust", "Albert Camus"], c: 1},
-                {q: "Dans quelle langue Shakespeare a-t-il écrit ses œuvres ?", a: ["Latin", "Français", "Anglais ancien", "Anglais"], c: 2},
-                {q: "Qui a écrit 'Cent ans de solitude' ?", a: ["Pablo Neruda", "Gabriel García Márquez", "Mario Vargas Llosa", "Jorge Luis Borges"], c: 1},
-                {q: "Quel est le premier livre de la saga 'Le Seigneur des Anneaux' ?", a: ["Les Deux Tours", "La Communauté de l'Anneau", "Le Retour du Roi", "Bilbo le Hobbit"], c: 1},
-                {q: "Qui a écrit 'Madame Bovary' ?", a: ["Victor Hugo", "Gustave Flaubert", "Stendhal", "Honoré de Balzac"], c: 1},
-                {q: "Dans quel pays est né l'écrivain Kafka ?", a: ["Autriche", "Allemagne", "République tchèque", "Pologne"], c: 2}
-            ],
-            Technologie: [
-                {q: "Qui a fondé Microsoft ?", a: ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Larry Page"], c: 1},
-                {q: "Que signifie 'WWW' ?", a: ["World Wide Web", "World Wide Website", "Web Wide World", "Website Wide World"], c: 0},
-                {q: "En quelle année a été créé Facebook ?", a: ["2003", "2004", "2005", "2006"], c: 1},
-                {q: "Quel langage de programmation a été créé par Guido van Rossum ?", a: ["Java", "Python", "C++", "JavaScript"], c: 1},
-                {q: "Que signifie 'CPU' ?", a: ["Computer Processing Unit", "Central Processing Unit", "Core Processing Unit", "Central Program Unit"], c: 1},
-                {q: "Quel réseau social utilise des 'tweets' ?", a: ["Facebook", "Twitter", "Instagram", "LinkedIn"], c: 1},
-                {q: "Combien de bits y a-t-il dans un octet ?", a: ["6", "7", "8", "9"], c: 2},
-                {q: "Quel est le système d'exploitation mobile de Google ?", a: ["iOS", "Android", "Windows Phone", "BlackBerry"], c: 1},
-                {q: "Qui a inventé le World Wide Web ?", a: ["Bill Gates", "Steve Jobs", "Tim Berners-Lee", "Mark Zuckerberg"], c: 2},
-                {q: "Que signifie 'HTML' ?", a: ["High Tech Modern Language", "HyperText Markup Language", "Home Tool Markup Language", "HyperText Modern Language"], c: 1}
-            ],
-            Art: [
-                {q: "Qui a peint 'La Joconde' ?", a: ["Vincent van Gogh", "Leonardo da Vinci", "Pablo Picasso", "Michel-Ange"], c: 1},
-                {q: "Dans quel musée se trouve 'La Joconde' ?", a: ["Musée d'Orsay", "Louvre", "Musée Picasso", "Centre Pompidou"], c: 1},
-                {q: "Qui a peint 'La Nuit étoilée' ?", a: ["Vincent van Gogh", "Claude Monet", "Pablo Picasso", "Salvador Dalí"], c: 0},
-                {q: "Quel mouvement artistique Pablo Picasso a-t-il cofondé ?", a: ["Impressionnisme", "Surréalisme", "Cubisme", "Fauvisme"], c: 2},
-                {q: "Qui a sculpté 'Le Penseur' ?", a: ["Michel-Ange", "Auguste Rodin", "Alberto Giacometti", "Constantin Brâncuși"], c: 1},
-                {q: "Dans quelle ville se trouve le musée du Prado ?", a: ["Barcelone", "Madrid", "Séville", "Valence"], c: 1},
-                {q: "Qui a peint 'Guernica' ?", a: ["Salvador Dalí", "Joan Miró", "Pablo Picasso", "Francisco Goya"], c: 2},
-                {q: "Quel peintre a coupé son oreille ?", a: ["Paul Gauguin", "Vincent van Gogh", "Henri de Toulouse-Lautrec", "Paul Cézanne"], c: 1},
-                {q: "Qui a peint le plafond de la Chapelle Sixtine ?", a: ["Leonardo da Vinci", "Raphaël", "Michel-Ange", "Le Caravage"], c: 2},
-                {q: "Quel mouvement artistique est né en France vers 1870 ?", a: ["Romantisme", "Impressionnisme", "Réalisme", "Symbolisme"], c: 1}
-            ],
-            Gastronomie: [
-                {q: "De quel pays vient la paella ?", a: ["Italie", "Portugal", "Espagne", "France"], c: 2},
-                {q: "Quel fromage utilise-t-on traditionnellement pour la pizza Margherita ?", a: ["Parmesan", "Gorgonzola", "Mozzarella", "Ricotta"], c: 2},
-                {q: "Quelle épice donne sa couleur jaune au curry ?", a: ["Safran", "Curcuma", "Paprika", "Cumin"], c: 1},
-                {q: "De quel pays vient le sushi ?", a: ["Chine", "Corée", "Japon", "Thaïlande"], c: 2},
-                {q: "Quel alcool utilise-t-on pour flamber une crêpe Suzette ?", a: ["Rhum", "Grand Marnier", "Cognac", "Armagnac"], c: 1},
-                {q: "Quelle pâte utilise-t-on pour faire des gnocchis ?", a: ["Blé", "Riz", "Pomme de terre", "Maïs"], c: 2},
-                {q: "Dans quelle région française produit-on le Roquefort ?", a: ["Normandie", "Aveyron", "Savoie", "Bourgogne"], c: 1},
-                {q: "Quel poisson utilise-t-on pour faire le caviar le plus réputé ?", a: ["Saumon", "Esturgeon", "Thon", "Truite"], c: 1},
-                {q: "De quel pays vient le guacamole ?", a: ["Pérou", "Mexique", "Argentine", "Colombie"], c: 1},
-                {q: "Quelle viande utilise-t-on pour le bœuf bourguignon ?", a: ["Bœuf", "Porc", "Veau", "Agneau"], c: 0}
-            ]
-        };
+    <h3>Classement</h3>
+    <ul id="leaderboard"></ul>
 
-        // Variables globales
-        let currentQuiz = null;
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let timer = null;
-        let timeLeft = 0;
-        let playerName = '';
-        let isAdmin = false;
-        let customQuiz = null;
-        let customQuestionCount = 0;
-        let activeThemes = Object.keys(QUESTIONS_DB);
+    <div id="qrDisplayArea" style="text-align:center; margin-top:20px;"></div>
+  </div>
 
-        // Sons
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(frequency, duration, type = 'square') {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration);
-        }
+  <script>
+    const supabase = supabase.createClient("https://YOUR_PROJECT_URL.supabase.co", "YOUR_ANON_KEY");
 
-        function playCorrectSound() {
-            playSound(800, 0.2, 'sine');
-            setTimeout(() => playSound(1000, 0.3, 'sine'), 100);
-        }
+    let isAdmin = false;
+    let name = "";
+    let currentQR = "";
+    let score = 0;
+    let questionIndex = 0;
+    let selectedQuestions = [];
+    let timer;
 
-        function playIncorrectSound() {
-            playSound(200, 0.5, 'sawtooth');
-        }
+    const allThemes = ["Histoire", "Géographie", "Sciences", "Sport", "Cinéma", "Musique", "Littérature", "Technologie", "Nature", "Culture"];
 
-        // QR Code simple
-        function generateQR() {
-            const canvas = document.getElementById('qrcode');
-            const ctx = canvas.getContext('2d');
-            
-            // QR code simple (pattern décoratif)
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, 150, 150);
-            ctx.fillStyle = '#fff';
-            
-            // Pattern de base
-            for(let i = 0; i < 15; i++) {
-                for(let j = 0; j < 15; j++) {
-                    if((i + j) % 2 === 0) {
-                        ctx.fillRect(i * 10, j * 10, 10, 10);
-                    }
-                }
-            }
-            
-            // Coins de référence
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, 70, 70);
-            ctx.fillRect(80, 0, 70, 70);
-            ctx.fillRect(0, 80, 70, 70);
-            
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(10, 10, 50, 50);
-            ctx.fillRect(90, 10, 50, 50);
-            ctx.fillRect(10, 90, 50, 50);
-            
-            ctx.fillStyle = '#000';
-            ctx.fillRect(20, 20, 30, 30);
-            ctx.fillRect(100, 20, 30, 30);
-            ctx.fillRect(20, 100, 30, 30);
-        }
+    const questionsBank = {
+      "Histoire": [
+        { q: "Qui a fondé l'Empire romain ?", a: ["Jules César", "Auguste", "Néron", "Caligula"], r: 1 },
+        { q: "En quelle année la Révolution française a-t-elle commencé ?", a: ["1776", "1789", "1804", "1765"], r: 1 }
+      ],
+      "Géographie": [
+        { q: "Quel est le plus long fleuve du monde ?", a: ["Nil", "Amazone", "Yangtsé", "Mississippi"], r: 1 },
+        { q: "Quelle est la capitale de l’Australie ?", a: ["Sydney", "Melbourne", "Canberra", "Brisbane"], r: 2 }
+      ]
+    };
 
-        // Gestion du stockage local
-        function saveToStorage(key, data) {
-            try {
-                const gameData = JSON.parse(localStorage.getItem('olidayQuizPro') || '{}');
-                gameData[key] = data;
-                localStorage.setItem('olidayQuizPro', JSON.stringify(gameData));
-            } catch (e) {
-                console.error('Erreur de sauvegarde:', e);
-            }
-        }
+    function join() {
+      name = document.getElementById("playerName").value.trim();
+      if (!name) return alert("Entrez un prénom.");
+      isAdmin = name.toLowerCase() === "admin";
+      document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
+      loadConfig();
+      listenScores();
+      if (!isAdmin) startQuiz();
+    }
 
-        function loadFromStorage(key, defaultValue = null) {
-            try {
-                const gameData = JSON.parse(localStorage.getItem('olidayQuizPro') || '{}');
-                return gameData[key] !== undefined ? gameData[key] : defaultValue;
-            } catch (e) {
-                console.error('Erreur de chargement:', e);
-                return defaultValue;
-            }
-        }
-
-        // Gestion des scores
-        function saveScore(name, score, theme) {
-            const leaderboard = loadFromStorage('leaderboard', []);
-            leaderboard.push({
-                name: name,
-                score: score,
-                theme: theme,
-                date: new Date().toLocaleDateString()
-            });
-            
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard.splice(QUIZ_CONFIG.maxLeaderboardEntries);
-            
-            saveToStorage('leaderboard', leaderboard);
-            updateLeaderboard();
-        }
-
-        function updateLeaderboard() {
-            const leaderboard = loadFromStorage('leaderboard', []);
-            const list = document.getElementById('leaderboardList');
-            
-            if (leaderboard.length === 0) {
-                list.innerHTML = '<div class="leaderboard-item">Aucun score enregistré</div>';
-                return;
-            }
-            
-            list.innerHTML = leaderboard.map((entry, index) => 
-                `<div class="leaderboard-item">
-                    <span>${index + 1}. ${entry.name}</span>
-                    <span>${entry.score}/5 - ${entry.theme}</span>
-                </div>`
-            ).join('');
-        }
-
-        function resetLeaderboard() {
-            if (confirm('Êtes-vous sûr de vouloir effacer tous les scores ?')) {
-                saveToStorage('leaderboard', []);
-                updateLeaderboard();
-            }
-        }
-
-        // Gestion des thèmes
-        function updateThemesDisplay() {
-            const grid = document.getElementById('themesGrid');
-            grid.innerHTML = '';
-            
-            Object.keys(QUESTIONS_DB).forEach(theme => {
-                const button = document.createElement('button');
-                button.className = 'theme-btn';
-                button.textContent = theme;
-                button.disabled = !activeThemes.includes(theme);
-                button.onclick = () => startQuiz(theme);
-                grid.appendChild(button);
-            });
-        }
-
-        function showThemeManager() {
-            document.getElementById('homeScreen').classList.add('hidden');
-            document.getElementById('themeManager').classList.remove('hidden');
-            
-            const list = document.getElementById('themesList');
-            list.innerHTML = Object.keys(QUESTIONS_DB).map(theme => 
-                `<div class="input-group">
-                    <label>
-                        <input type="checkbox" ${activeThemes.includes(theme) ? 'checked' : ''} 
-                               onchange="toggleTheme('${theme}')"> ${theme}
-                    </label>
-                </div>`
-            ).join('');
-        }
-
-        function toggleTheme(theme) {
-            if (activeThemes.includes(theme)) {
-                activeThemes = activeThemes.filter(t => t !== theme);
-            } else {
-                activeThemes.push(theme);
-            }
-            saveToStorage('activeThemes', activeThemes);
-            updateThemesDisplay();
-        }
-
-        // Gestion des fonds d'écran
-        function showBackgroundManager() {
-            document.getElementById('homeScreen').classList.add('hidden');
-            document.getElementById('backgroundManager').classList.remove('hidden');
-            
-            const container = document.getElementById('themeBackgrounds');
-            container.innerHTML = Object.keys(QUESTIONS_DB).map(theme => 
-                `<div class="input-group">
-                    <label>${theme} :</label>
-                    <input type="file" id="bg_${theme}" class="file-input" accept="image/jpeg,image/jpg" 
-                           onchange="changeBackground('${theme}')">
-                    <label for="bg_${theme}" class="file-label">Choisir une image</label>
-                </div>`
-            ).join('');
-        }
-
-        function changeBackground(type) {
-            const input = document.getElementById(type === 'home' ? 'homeBackground' : `bg_${type}`);
-            const file = input.files[0];
-            
-            if (file && file.type.includes('jpeg')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const imageUrl = e.target.result;
-                    if (type === 'home') {
-                        saveToStorage('homeBackground', imageUrl);
-                        updateBackgroundImage();
-                    } else {
-                        saveToStorage(`background_${type}`, imageUrl);
-                    }
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert('Veuillez sélectionner un fichier JPG valide.');
-            }
-        }
-
-        function updateBackgroundImage(theme = null) {
-            const overlay = document.getElementById('backgroundOverlay');
-            let backgroundUrl;
-            
-            if (theme && theme !== 'home') {
-                backgroundUrl = loadFromStorage(`background_${theme}`);
-            } else {
-                backgroundUrl = loadFromStorage('homeBackground');
-            }
-            
-            if (backgroundUrl) {
-                overlay.style.backgroundImage = `url(${backgroundUrl})`;
-            } else {
-                overlay.style.backgroundImage = '';
-            }
-        }
-
-        // Gestion du quiz personnalisé
-        function showCustomQuizCreator() {
-            document.getElementById('homeScreen').classList.add('hidden');
-            document.getElementById('customQuizCreator').classList.remove('hidden');
-            
-            customQuiz = { title: '', questions: [] };
-            customQuestionCount = 0;
-            document.getElementById('customQuestions').innerHTML = '';
-            document.getElementById('customQuizTitle').value = '';
-            
-            addCustomQuestion();
-        }
-
-        function addCustomQuestion() {
-            if (customQuestionCount >= 10) {
-                alert('Maximum 10 questions par quiz personnalisé.');
-                return;
-            }
-            
-            customQuestionCount++;
-            const container = document.getElementById('customQuestions');
-            const questionDiv = document.createElement('div');
-            questionDiv.className = 'admin-panel';
-            questionDiv.innerHTML = `
-                <h4>Question ${customQuestionCount}</h4>
-                <div class="input-group">
-                    <label>Question :</label>
-                    <input type="text" id="q${customQuestionCount}" placeholder="Votre question..." maxlength="200">
-                </div>
-                <div class="input-group">
-                    <label>Réponse A :</label>
-                    <input type="text" id="q${customQuestionCount}a1" placeholder="Première réponse..." maxlength="100">
-                </div>
-                <div class="input-group">
-                    <label>Réponse B :</label>
-                    <input type="text" id="q${customQuestionCount}a2" placeholder="Deuxième réponse..." maxlength="100">
-                </div>
-                <div class="input-group">
-                    <label>Réponse C :</label>
-                    <input type="text" id="q${customQuestionCount}a3" placeholder="Troisième réponse..." maxlength="100">
-                </div>
-                <div class="input-group">
-                    <label>Réponse D :</label>
-                    <input type="text" id="q${customQuestionCount}a4" placeholder="Quatrième réponse..." maxlength="100">
-                </div>
-                <div class="input-group">
-                    <label>Bonne réponse :</label>
-                    <select id="q${customQuestionCount}correct">
-                        <option value="0">A</option>
-                        <option value="1">B</option>
-                        <option value="2">C</option>
-                        <option value="3">D</option>
-                    </select>
-                </div>
-                <button class="btn btn-danger" onclick="removeCustomQuestion(${customQuestionCount})">Supprimer</button>
-            `;
-            container.appendChild(questionDiv);
-            
-            if (customQuestionCount >= 10) {
-                document.getElementById('addQuestionBtn').style.display = 'none';
-            }
-        }
-
-        function removeCustomQuestion(num) {
-            const questionDiv = document.querySelector(`#q${num}`).closest('.admin-panel');
-            questionDiv.remove();
-            customQuestionCount--;
-            
-            document.getElementById('addQuestionBtn').style.display = 'block';
-            
-            // Renuméroter les questions
-            const questions = document.querySelectorAll('#customQuestions .admin-panel');
-            questions.forEach((div, index) => {
-                const newNum = index + 1;
-                div.querySelector('h4').textContent = `Question ${newNum}`;
-            });
-        }
-
-        function startCustomQuiz() {
-            const title = document.getElementById('customQuizTitle').value.trim();
-            if (!title) {
-                alert('Veuillez saisir un titre pour le quiz.');
-                return;
-            }
-            
-            const questions = [];
-            for (let i = 1; i <= customQuestionCount; i++) {
-                const questionEl = document.getElementById(`q${i}`);
-                if (!questionEl) continue;
-                
-                const question = questionEl.value.trim();
-                const answers = [
-                    document.getElementById(`q${i}a1`).value.trim(),
-                    document.getElementById(`q${i}a2`).value.trim(),
-                    document.getElementById(`q${i}a3`).value.trim(),
-                    document.getElementById(`q${i}a4`).value.trim()
-                ];
-                const correct = parseInt(document.getElementById(`q${i}correct`).value);
-                
-                if (question && answers.every(a => a)) {
-                    questions.push({ q: question, a: answers, c: correct });
-                }
-            }
-            
-            if (questions.length === 0) {
-                alert('Veuillez créer au moins une question complète.');
-                return;
-            }
-            
-            customQuiz = { title, questions };
-            startQuiz('Personnalisé');
-        }
-
-        // Gestion principale du quiz
-        function startQuiz(theme) {
-            if (!playerName) {
-                alert('Veuillez entrer votre prénom !');
-                return;
-            }
-            
-            let questions;
-            if (theme === 'Personnalisé' && customQuiz) {
-                questions = [...customQuiz.questions];
-                document.getElementById('currentTheme').textContent = customQuiz.title;
-            } else if (QUESTIONS_DB[theme]) {
-                questions = [...QUESTIONS_DB[theme]];
-                document.getElementById('currentTheme').textContent = theme;
-                updateBackgroundImage(theme);
-            } else {
-                alert('Thème non disponible !');
-                return;
-            }
-            
-            // Mélanger et sélectionner les questions
-            questions.sort(() => Math.random() - 0.5);
-            currentQuiz = {
-                theme: theme === 'Personnalisé' ? customQuiz.title : theme,
-                questions: questions.slice(0, Math.min(QUIZ_CONFIG.questionsPerQuiz, questions.length)),
-                answers: []
-            };
-            
-            currentQuestionIndex = 0;
-            score = 0;
-            
-            document.getElementById('homeScreen').classList.add('hidden');
-            document.getElementById('customQuizCreator').classList.add('hidden');
-            document.getElementById('quizScreen').classList.remove('hidden');
-            
-            showQuestion();
-        }
-
-        function startRandomQuiz() {
-            const availableThemes = activeThemes.filter(theme => QUESTIONS_DB[theme]);
-            if (availableThemes.length === 0) {
-                alert('Aucun thème disponible !');
-                return;
-            }
-            
-            const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
-            startQuiz(randomTheme);
-        }
-
-        function showQuestion() {
-            if (currentQuestionIndex >= currentQuiz.questions.length) {
-                endQuiz();
-                return;
-            }
-            
-            const question = currentQuiz.questions[currentQuestionIndex];
-            const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100;
-            
-            document.getElementById('progressBar').style.width = `${progress}%`;
-            document.getElementById('questionText').textContent = question.q;
-            
-            const answersContainer = document.getElementById('answersContainer');
-            answersContainer.innerHTML = question.a.map((answer, index) => 
-                `<button class="answer-btn" onclick="selectAnswer(${index})">${String.fromCharCode(65 + index)}) ${answer}</button>`
-            ).join('');
-            
-            startTimer();
-        }
-
-        function startTimer() {
-            timeLeft = QUIZ_CONFIG.timePerQuestion;
-            updateTimerDisplay();
-            
-            timer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    selectAnswer(-1); // Temps écoulé
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerEl = document.getElementById('timer');
-            timerEl.textContent = timeLeft;
-            timerEl.style.color = timeLeft <= 2 ? '#ff0044' : '#ff006e';
-        }
-
-        function selectAnswer(answerIndex) {
-            clearInterval(timer);
-            
-            const question = currentQuiz.questions[currentQuestionIndex];
-            const buttons = document.querySelectorAll('.answer-btn');
-            
-            buttons.forEach((btn, index) => {
-                btn.disabled = true;
-                if (index === question.c) {
-                    btn.classList.add('correct');
-                } else if (index === answerIndex) {
-                    btn.classList.add('incorrect');
-                }
-            });
-            
-            const isCorrect = answerIndex === question.c;
-            const wasTimeout = answerIndex === -1;
-            
-            currentQuiz.answers.push({
-                question: question.q,
-                userAnswer: wasTimeout ? 'Temps écoulé' : question.a[answerIndex],
-                correctAnswer: question.a[question.c],
-                isCorrect: isCorrect
-            });
-            
-            if (isCorrect) {
-                score++;
-                playCorrectSound();
-            } else {
-                playIncorrectSound();
-            }
-            
-            setTimeout(() => {
-                currentQuestionIndex++;
-                showQuestion();
-            }, 2000);
-        }
-
-        function endQuiz() {
-            document.getElementById('quizScreen').classList.add('hidden');
-            document.getElementById('resultsScreen').classList.remove('hidden');
-            
-            document.getElementById('finalScore').textContent = `Score: ${score}/${currentQuiz.questions.length}`;
-            
-            const resultsList = document.getElementById('resultsList');
-            resultsList.innerHTML = currentQuiz.answers.map(answer => 
-                `<div class="result-item ${answer.isCorrect ? 'result-correct' : 'result-incorrect'}">
-                    <div>
-                        <strong>Q:</strong> ${answer.question}<br>
-                        <strong>Votre réponse:</strong> ${answer.userAnswer}<br>
-                        <strong>Bonne réponse:</strong> ${answer.correctAnswer}
-                    </div>
-                    <div>${answer.isCorrect ? '✅' : '❌'}</div>
-                </div>`
-            ).join('');
-            
-            // Sauvegarder le score
-            saveScore(playerName, score, currentQuiz.theme);
-            
-            updateBackgroundImage();
-        }
-
-        // Navigation
-        function goHome() {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.add('hidden'));
-            document.getElementById('homeScreen').classList.remove('hidden');
-            
-            updateBackgroundImage();
-        }
-
-        // Vérification du mode admin
-        function checkAdminMode() {
-            const nameInput = document.getElementById('playerName');
-            playerName = nameInput.value.trim();
-            isAdmin = playerName.toLowerCase() === 'admin';
-            
-            const adminPanel = document.getElementById('adminPanel');
-            if (isAdmin) {
-                adminPanel.classList.remove('hidden');
-            } else {
-                adminPanel.classList.add('hidden');
-            }
-        }
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            generateQR();
-            updateLeaderboard();
-            
-            // Charger les données sauvegardées
-            activeThemes = loadFromStorage('activeThemes', Object.keys(QUESTIONS_DB));
-            updateThemesDisplay();
-            updateBackgroundImage();
-            
-            // Événements
-            document.getElementById('playerName').addEventListener('input', checkAdminMode);
-            
-            console.log('Oliday Quizz Pro initialisé !');
+    async function loadConfig() {
+      const { data } = await supabase.from("config").select("*").single();
+      if (data) {
+        document.getElementById("playerLimit").value = data.player_limit || 10;
+        const container = document.getElementById("themes");
+        container.innerHTML = "";
+        allThemes.forEach(theme => {
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.id = "theme_" + theme;
+          input.checked = data.theme_list?.includes(theme);
+          container.appendChild(input);
+          container.appendChild(document.createTextNode(" " + theme));
+          container.appendChild(document.createElement("br"));
         });
-    </script>
+        if (data.qr_url) {
+          currentQR = data.qr_url;
+          document.getElementById("qrPreview").src = currentQR;
+          document.getElementById("qrDisplayArea").innerHTML =
+            '<img src="' + currentQR + '" alt="QR Code" style="max-width:150px;border:2px solid #00ffff;border-radius:8px;" />';
+        }
+      }
+    }
+
+    async function saveConfig() {
+      const player_limit = parseInt(document.getElementById("playerLimit").value);
+      const selectedThemes = allThemes.filter(t => document.getElementById("theme_" + t).checked);
+      await supabase.from("config").update({
+        player_limit,
+        theme_list: selectedThemes,
+        qr_url: currentQR
+      }).eq("id", 1);
+      alert("Config enregistrée !");
+    }
+
+    function handleQRUpload(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentQR = e.target.result;
+        document.getElementById("qrPreview").src = currentQR;
+      };
+      if (file) reader.readAsDataURL(file);
+    }
+
+    function startQuiz() {
+      const theme = allThemes[Math.floor(Math.random() * allThemes.length)];
+      selectedQuestions = questionsBank[theme].sort(() => 0.5 - Math.random()).slice(0, 5);
+      questionIndex = 0;
+      score = 0;
+      document.getElementById("quizTitle").innerText = `Thème : ${theme}`;
+      document.getElementById("quizArea").style.display = "block";
+      showQuestion();
+    }
+
+    function showQuestion() {
+      clearTimeout(timer);
+      if (questionIndex >= selectedQuestions.length) return endQuiz();
+      const q = selectedQuestions[questionIndex];
+      const container = document.getElementById("questionContainer");
+      container.innerHTML = `<p>${q.q}</p>`;
+      q.a.forEach((opt, i) => {
+        const btn = document.createElement("div");
+        btn.className = "answer";
+        btn.innerText = opt;
+        btn.onclick = () => handleAnswer(i);
+        container.appendChild(btn);
+      });
+      startTimer();
+    }
+
+    function startTimer() {
+      let time = 5;
+      document.getElementById("timerDisplay").innerText = `Temps restant : ${time}s`;
+      timer = setInterval(() => {
+        time--;
+        document.getElementById("timerDisplay").innerText = `Temps restant : ${time}s`;
+        if (time <= 0) {
+          clearInterval(timer);
+          questionIndex++;
+          showQuestion();
+        }
+      }, 1000);
+    }
+
+    function handleAnswer(i) {
+      clearInterval(timer);
+      const q = selectedQuestions[questionIndex];
+      const answers = document.querySelectorAll(".answer");
+      answers.forEach((el, idx) => {
+        el.classList.add(idx === q.r ? "correct" : (idx === i ? "wrong" : ""));
+      });
+      if (i === q.r) score++;
+      setTimeout(() => {
+        questionIndex++;
+        showQuestion();
+      }, 1000);
+    }
+
+    function endQuiz() {
+      document.getElementById("quizArea").innerHTML = `<h2>Fin du quiz ! Score : ${score}</h2>`;
+      supabase.from("players").insert([{ name, score }]);
+    }
+
+    function listenScores() {
+      supabase.channel("players-channel")
+        .on("postgres_changes", { event: "*", schema: "public", table: "players" }, payload => {
+          updateLeaderboard();
+        }).subscribe();
+      updateLeaderboard();
+    }
+
+    async function updateLeaderboard() {
+      const { data } = await supabase.from("players").select("*").order("score", { ascending: false }).limit(10);
+      const leaderboard = document.getElementById("leaderboard");
+      leaderboard.innerHTML = data?.map(p => `<li>${p.name} - ${p.score} pts</li>`).join("") || "";
+    }
+  </script>
 </body>
 </html>
