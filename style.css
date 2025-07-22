@@ -1,0 +1,110 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Orbitron', sans-serif;
+  background: #0f0f1a;
+  color: white;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#app {
+  padding: 2rem;
+  max-width: 900px;
+  margin: auto;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 1rem;
+  box-shadow: 0 0 20px #00ffff80;
+}
+
+.menu h1, .quiz h2, .summary h2, .admin-panel h2 {
+  text-align: center;
+  color: #00ffff;
+  text-shadow: 0 0 10px #00ffff;
+}
+
+input[type="text"], input[type="number"] {
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  width: 90%;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #00ffff;
+  box-shadow: 0 0 10px #00ffff;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+button:hover {
+  background: #00ffff;
+  color: #000;
+  box-shadow: 0 0 20px #00ffff;
+}
+
+.theme-btn {
+  display: inline-block;
+  margin: 10px;
+}
+
+.quiz p {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.quiz ul {
+  list-style: none;
+  padding: 0;
+  text-align: center;
+}
+
+.quiz li {
+  margin: 10px 0;
+}
+
+.quiz button {
+  width: 80%;
+  max-width: 400px;
+}
+
+#timer {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+  color: #ff00ff;
+}
+
+.leaderboard ol {
+  padding-left: 20px;
+}
+
+.summary ul {
+  list-style: none;
+  padding: 0;
+}
+
+.admin-panel, .create-quiz {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 0 10px #ffffff40;
+}
+
+.question-block {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: rgba(255,255,255,0.05);
+  border-radius: 8px;
+}
