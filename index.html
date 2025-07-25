@@ -57,7 +57,59 @@
             animation: neonGlow 2s ease-in-out infinite alternate;
             text-shadow: 0 0 30px #00ffff;
         }
+.connection-status {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #00ffff;
+}
 
+.connection-panel {
+    margin-bottom: 20px;
+}
+
+.players-panel {
+    background: rgba(0, 255, 255, 0.1);
+    border: 2px solid #00ffff;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 250px;
+    z-index: 1000;
+}
+
+.players-panel h3 {
+    color: #00ffff;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.player-item {
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    margin: 5px 0;
+    border-radius: 5px;
+    border-left: 3px solid #ff006e;
+    font-size: 0.9rem;
+}
+
+.player-item.admin {
+    border-left-color: #00ff88;
+}
+
+.admin-controls {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(255, 0, 110, 0.1);
+    border: 2px solid #ff006e;
+    border-radius: 15px;
+}
         @keyframes neonGlow {
             0% { filter: hue-rotate(0deg); }
             100% { filter: hue-rotate(90deg); }
@@ -265,18 +317,29 @@
             margin-bottom: 15px;
         }
 
-        .qr-code {
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            display: inline-block;
-        }
+        <div class="connection-panel">
+    <div id="connectionStatus" class="connection-status">
+        <span id="statusIndicator">🔴</span>
+        <span id="statusText">Déconnecté</span>
+    </div>
+    
+    <div id="adminQRPanel" class="admin-panel hidden">
+        <h3>Générer QR Code</h3>
+        <input type="file" id="qrImageUpload" class="file-input" accept="image/*" onchange="loadCustomQR()">
+        <label for="qrImageUpload" class="file-label">Charger QR Code</label>
+        <button class="btn btn-secondary" onclick="generateDefaultQR()">QR par défaut</button>
+    </div>
+    
+    <div class="qr-code" id="qrDisplay" style="display: none;">
+        <img id="qrImage" style="max-width: 150px; border-radius: 5px;">
+        <p style="color: #000; margin-top: 10px;">Scannez pour rejoindre !</p>
+    </div>
+</div>
 
-        .qr-code canvas {
-            border-radius: 5px;
-        }
+<div id="playersPanel" class="players-panel">
+    <h3>👥 Joueurs connectés: <span id="playerCount">0</span></h3>
+    <div id="playersList"></div>
+</div>
 
         .results {
             text-align: center;
@@ -582,17 +645,27 @@
             ]
         };
 
-        // Variables globales
-        let currentQuiz = null;
-        let currentQuestionIndex = 0;
-        let score = 0;
-        let timer = null;
-        let timeLeft = 0;
-        let playerName = '';
-        let isAdmin = false;
-        let customQuiz = null;
-        let customQuestionCount = 0;
-        let activeThemes = Object.keys(QUESTIONS_DB);
+      // Variables globales WebSocket
+let ws = null;
+let isConnected = false;
+let isGameHost = false;
+let connectedPlayers = new Map();
+let gameSession = null;
+
+// Configuration WebSocket (à adapter selon votre serveur)
+const WS_CONFIG = {
+    url: 'ws://localhost:8080', // À remplacer par votre serveur WebSocket
+    reconnectInterval: 5000
+};
+
+// Variables de jeu existantes (garder les existantes)
+let currentQuiz = null;
+let currentQuestionIndex = 0;
+let score = 0;
+let timer = null;
+let timeLeft = 0;
+let playerName = '';
+let isAdmin = false;
 
         // Sons
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -641,7 +714,87 @@
                     }
                 }
             }
-            
+         // Gestion WebSocket
+function initWebSocket() {
+    try {
+        ws = new WebSocket(WS_CONFIG.url);
+        
+        ws.onopen = function() {
+            isConnected = true;
+            updateConnectionStatus(true);
+            console.log('Connecté au serveur');
+        };
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            handleWebSocketMessage(data);
+        };
+        
+        ws.onclose = function() {
+            isConnected = false;
+            updateConnectionStatus(false);
+            console.log('Connexion fermée');
+            setTimeout(initWebSocket, WS_CONFIG.reconnectInterval);
+        };
+        
+        ws.onerror = function(error) {
+            console.error('Erreur WebSocket:', error);
+        };
+    } catch (error) {
+        console.error('Impossible de se connecter:', error);
+        setTimeout(initWebSocket, WS_CONFIG.reconnectInterval);
+    }
+}
+
+function sendWebSocketMessage(type, data) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+            type: type,
+            data: data,
+            playerId: playerName,
+            timestamp: Date.now()
+        }));
+    }
+}
+
+function handleWebSocketMessage(message) {
+    switch(message.type) {
+        case 'PLAYER_JOINED':
+            addPlayer(message.data);
+            break;
+        case 'PLAYER_LEFT':
+            removePlayer(message.data.playerId);
+            break;
+        case 'PLAYERS_LIST':
+            updatePlayersList(message.data);
+            break;
+        case 'GAME_START':
+            handleGameStart(message.data);
+            break;
+        case 'NEXT_QUESTION':
+            handleNextQuestion(message.data);
+            break;
+        case 'GAME_END':
+            handleGameEnd(message.data);
+            break;
+        case 'ERROR':
+            alert('Erreur: ' + message.data.message);
+            break;
+    }
+}
+
+function updateConnectionStatus(connected) {
+    const indicator = document.getElementById('statusIndicator');
+    const text = document.getElementById('statusText');
+    
+    if (connected) {
+        indicator.textContent = '🟢';
+        text.textContent = 'Connecté';
+    } else {
+        indicator.textContent = '🔴';
+        text.textContent = 'Déconnecté';
+    }
+}   
             // Coins de référence
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, 70, 70);
@@ -1089,19 +1242,78 @@
         }
 
         // Vérification du mode admin
-        function checkAdminMode() {
-            const nameInput = document.getElementById('playerName');
-            playerName = nameInput.value.trim();
-            isAdmin = playerName.toLowerCase() === 'admin';
-            
-            const adminPanel = document.getElementById('adminPanel');
-            if (isAdmin) {
-                adminPanel.classList.remove('hidden');
-            } else {
-                adminPanel.classList.add('hidden');
-            }
+       function checkAdminMode() {
+    const nameInput = document.getElementById('playerName');
+    playerName = nameInput.value.trim();
+    isAdmin = playerName.toLowerCase() === 'admin';
+    isGameHost = isAdmin;
+    
+    const adminPanel = document.getElementById('adminPanel');
+    const adminQRPanel = document.getElementById('adminQRPanel');
+    
+    if (isAdmin) {
+        adminPanel.classList.remove('hidden');
+        adminQRPanel.classList.remove('hidden');
+        
+        // Ajouter les contrôles admin pour le jeu multijoueur
+        if (!document.getElementById('multiplayerControls')) {
+            const controls = document.createElement('div');
+            controls.id = 'multiplayerControls';
+            controls.className = 'admin-controls';
+            controls.innerHTML = `
+                <h3>Contrôles Multijoueur</h3>
+                <button class="btn btn-success" onclick="startMultiplayerGame()">🚀 Lancer Partie Multijoueur</button>
+                <button class="btn btn-danger" onclick="stopGame()">⏹️ Arrêter Partie</button>
+            `;
+            adminPanel.appendChild(controls);
         }
+    } else {
+        adminPanel.classList.add('hidden');
+        adminQRPanel.classList.add('hidden');
+    }
+    
+    // Rejoindre comme joueur si nom valide
+    if (playerName && isConnected) {
+        sendWebSocketMessage('JOIN_GAME', {
+            playerId: playerName,
+            isAdmin: isAdmin
+        });
+    }
+}
+// Gestion des joueurs
+function updatePlayersList(players) {
+    connectedPlayers.clear();
+    players.forEach(player => {
+        connectedPlayers.set(player.id, player);
+    });
+    
+    const countEl = document.getElementById('playerCount');
+    const listEl = document.getElementById('playersList');
+    
+    countEl.textContent = connectedPlayers.size;
+    
+    listEl.innerHTML = Array.from(connectedPlayers.values())
+        .map(player => 
+            `<div class="player-item ${player.isAdmin ? 'admin' : ''}">
+                ${player.isAdmin ? '👑' : '👤'} ${player.id}
+            </div>`
+        ).join('');
+}
 
+function addPlayer(player) {
+    connectedPlayers.set(player.id, player);
+    updatePlayersDisplay();
+}
+
+function removePlayer(playerId) {
+    connectedPlayers.delete(playerId);
+    updatePlayersDisplay();
+}
+
+function updatePlayersDisplay() {
+    const players = Array.from(connectedPlayers.values());
+    updatePlayersList(players);
+}
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             generateQR();
@@ -1114,7 +1326,145 @@
             
             // Événements
             document.getElementById('playerName').addEventListener('input', checkAdminMode);
+ // Gestion QR Code personnalisé
+function loadCustomQR() {
+    const input = document.getElementById('qrImageUpload');
+    const file = input.files[0];
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const qrImage = document.getElementById('qrImage');
+            const qrDisplay = document.getElementById('qrDisplay');
             
+            qrImage.src = e.target.result;
+            qrDisplay.style.display = 'block';
+            
+            // Sauvegarder l'image
+            saveToStorage('customQRCode', e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function generateDefaultQR() {
+    // Utiliser l'ancienne fonction generateQR mais afficher dans une image
+    const canvas = document.createElement('canvas');
+    canvas.width = 150;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d');
+    
+    // Code de génération QR existant (copier de votre fonction generateQR)
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 150, 150);
+    ctx.fillStyle = '#fff';
+    
+    for(let i = 0; i < 15; i++) {
+        for(let j = 0; j < 15; j++) {
+            if((i + j) % 2 === 0) {
+                ctx.fillRect(i * 10, j * 10, 10, 10);
+            }
+        }
+    }
+    
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 70, 70);
+    ctx.fillRect(80, 0, 70, 70);
+    ctx.fillRect(0, 80, 70, 70);
+    
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(10, 10, 50, 50);
+    ctx.fillRect(90, 10, 50, 50);
+    ctx.fillRect(10, 90, 50, 50);
+    
+    ctx.fillStyle = '#000';
+    ctx.fillRect(20, 20, 30, 30);
+    ctx.fillRect(100, 20, 30, 30);
+    ctx.fillRect(20, 100, 30, 30);
+    
+    const qrImage = document.getElementById('qrImage');
+    const qrDisplay = document.getElementById('qrDisplay');
+    
+    qrImage.src = canvas.toDataURL();
+    qrDisplay.style.display = 'block';
+}  
+            // Modifier la fonction d'initialisation existante
+document.addEventListener('DOMContentLoaded', function() {
+    // Code existant à garder...
+    updateLeaderboard();
+    activeThemes = loadFromStorage('activeThemes', Object.keys(QUESTIONS_DB));
+    updateThemesDisplay();
+    updateBackgroundImage();
+    
+    // Nouvelles initialisations
+    initWebSocket();
+    
+    // Charger QR personnalisé si existant
+    const savedQR = loadFromStorage('customQRCode');
+    if (savedQR) {
+        document.getElementById('qrImage').src = savedQR;
+        document.getElementById('qrDisplay').style.display = 'block';
+    }
+    // Fonctions de jeu multijoueur
+function startMultiplayerGame() {
+    if (!isAdmin || connectedPlayers.size < 1) {
+        alert('Pas assez de joueurs connectés !');
+        return;
+    }
+    
+    const availableThemes = activeThemes.filter(theme => QUESTIONS_DB[theme]);
+    if (availableThemes.length === 0) {
+        alert('Aucun thème disponible !');
+        return;
+    }
+    
+    const randomTheme = availableThemes[Math.floor(Math.random() * availableThemes.length)];
+    
+    sendWebSocketMessage('START_GAME', {
+        theme: randomTheme,
+        playerCount: connectedPlayers.size
+    });
+}
+
+function stopGame() {
+    if (!isAdmin) return;
+    
+    sendWebSocketMessage('STOP_GAME', {});
+    goHome();
+}
+
+function handleGameStart(gameData) {
+    // Démarrer le quiz pour tous les joueurs
+    currentQuiz = {
+        theme: gameData.theme,
+        questions: gameData.questions,
+        answers: []
+    };
+    
+    currentQuestionIndex = 0;
+    score = 0;
+    
+    document.getElementById('homeScreen').classList.add('hidden');
+    document.getElementById('quizScreen').classList.remove('hidden');
+    document.getElementById('currentTheme').textContent = gameData.theme;
+    
+    showQuestion();
+}
+
+function handleNextQuestion(questionData) {
+    // Synchroniser tous les joueurs sur la même question
+    showQuestion();
+}
+
+function handleGameEnd(resultsData) {
+    // Afficher les résultats globaux
+    endQuiz();
+}
+    // Événements existants
+    document.getElementById('playerName').addEventListener('input', checkAdminMode);
+    
+    console.log('Oliday Quizz Pro multijoueur initialisé !');
+});
             console.log('Oliday Quizz Pro initialisé !');
         });
     </script>
