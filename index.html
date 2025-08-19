@@ -1,84 +1,142 @@
-diff --git a//dev/null b/simple_quiz.html
-index 0000000000000000000000000000000000000000..187dfc8a207c7478b2d265713137f6d83311b222 100644
---- a//dev/null
-+++ b/simple_quiz.html
-@@ -0,0 +1,79 @@
-+<!DOCTYPE html>
-+<html lang="fr">
-+<head>
-+    <meta charset="UTF-8">
-+    <title>Mini Quiz</title>
-+    <style>
-+        body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 40px; }
-+        .quiz-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-+        .question { font-size: 1.2em; margin-bottom: 20px; }
-+        .answers { list-style: none; padding: 0; }
-+        .answers li { margin-bottom: 10px; }
-+        button { padding: 10px 20px; font-size: 1em; }
-+        #result { margin-top: 20px; font-weight: bold; }
-+    </style>
-+</head>
-+<body>
-+    <div class="quiz-container">
-+        <div id="question" class="question"></div>
-+        <ul id="answers" class="answers"></ul>
-+        <div id="result"></div>
-+        <button id="nextBtn" style="display:none;">Suivant</button>
-+    </div>
-+    <script>
-+        const quiz = [
-+            { q: "Quelle est la capitale de la France ?", a: ["Paris", "Londres", "Rome", "Berlin"], c: 0 },
-+            { q: "Combien font 2 + 2 ?", a: ["3", "4", "5", "6"], c: 1 },
-+            { q: "Quel est l'océan le plus grand ?", a: ["Atlantique", "Indien", "Arctique", "Pacifique"], c: 3 }
-+        ];
-+        let current = 0;
-+        let score = 0;
-+        const questionEl = document.getElementById('question');
-+        const answersEl = document.getElementById('answers');
-+        const resultEl = document.getElementById('result');
-+        const nextBtn = document.getElementById('nextBtn');
-+
-+        function showQuestion() {
-+            const q = quiz[current];
-+            questionEl.textContent = q.q;
-+            answersEl.innerHTML = '';
-+            q.a.forEach((text, index) => {
-+                const li = document.createElement('li');
-+                const btn = document.createElement('button');
-+                btn.textContent = text;
-+                btn.onclick = () => selectAnswer(index);
-+                li.appendChild(btn);
-+                answersEl.appendChild(li);
-+            });
-+            resultEl.textContent = '';
-+            nextBtn.style.display = 'none';
-+        }
-+
-+        function selectAnswer(index) {
-+            const q = quiz[current];
-+            if (index === q.c) {
-+                resultEl.textContent = 'Bonne réponse !';
-+                score++;
-+            } else {
-+                resultEl.textContent = 'Mauvaise réponse.';
-+            }
-+            const buttons = answersEl.querySelectorAll('button');
-+            buttons.forEach(b => b.disabled = true);
-+            nextBtn.style.display = 'block';
-+        }
-+
-+        nextBtn.onclick = () => {
-+            current++;
-+            if (current < quiz.length) {
-+                showQuestion();
-+            } else {
-+                questionEl.textContent = `Quiz terminé ! Votre score : ${score}/${quiz.length}`;
-+                answersEl.innerHTML = '';
-+                nextBtn.style.display = 'none';
-+            }
-+        };
-+
-+        showQuestion();
-+    </script>
-+</body>
-+</html>
+| **`conducteur_tool.py`** | ```python
+import re
+from dataclasses import dataclass
+from typing import List, Dict, Tuple, Optional
+import pdfplumber
+from rapidfuzz import fuzz
+from unidecode import unidecode
+
+TITLE_THRESHOLD = 80  # Score minimal de correspondance pour accepter un titre
+
+
+@dataclass
+class ConductorRow:
+    heure: str
+    qui: str
+    titre: str
+    contenu: str = "à compléter"
+
+
+def normalize(text: str) -> str:
+    """Simplifie un texte pour les comparaisons approximatives."""
+    return re.sub(r"\s+", " ", unidecode(text or "").strip().lower())
+
+
+def clean(text: str) -> str:
+    """Supprime tabulations/retours à la ligne internes."""
+    return re.sub(r"[\t\n\r]+", " ", text or "").strip()
+
+
+def is_title(line: str) -> bool:
+    """Heuristique : une ligne entièrement en majuscules ou suivie d'un ':' est un titre."""
+    stripped = line.strip()
+    return bool(stripped) and (stripped.isupper() or stripped.endswith(":"))
+
+
+def extract_conductor(path: str) -> List[ConductorRow]:
+    rows: List[ConductorRow] = []
+    hour_re = re.compile(r"\b\d{1,2}:\d{2}\b")
+
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            for line in page.extract_text().splitlines():
+                if hour_re.search(line):
+                    parts = [part.strip() for part in line.split("\t") if part.strip()]
+                    heure = parts[0] if parts else ""
+                    qui = parts[1] if len(parts) > 2 else ""
+                    titre = parts[2] if len(parts) > 2 else (parts[1] if len(parts) > 1 else "")
+                    rows.append(ConductorRow(heure=heure, qui=qui, titre=titre))
+    return rows
+
+
+def extract_briefing(path: str) -> Dict[str, str]:
+    sections: Dict[str, str] = {}
+    current_title: Optional[str] = None
+
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            for raw in page.extract_text().splitlines():
+                line = raw.strip()
+                if is_title(line):
+                    current_title = normalize(line)
+                    sections[current_title] = ""
+                elif current_title:
+                    sections[current_title] += " " + clean(line)
+    return {k: v.strip() for k, v in sections.items()}
+
+
+def match_titles(rows: List[ConductorRow], briefing: Dict[str, str]) -> None:
+    for row in rows:
+        normalized = normalize(row.titre)
+        best_title, score = None, 0
+        for title in briefing:
+            s = fuzz.ratio(normalized, title)
+            if s > score:
+                best_title, score = title, s
+        if best_title and score >= TITLE_THRESHOLD:
+            row.contenu = briefing[best_title]
+
+
+def segment_rows(rows: List[ConductorRow]) -> Tuple[List[ConductorRow], List[ConductorRow], List[ConductorRow]]:
+    avant, mi, apres = [], [], []
+    phase = "avant"
+
+    for row in rows:
+        titre_norm = normalize(row.titre)
+        if "intro se canto" in titre_norm:
+            phase = "mi"
+        elif "visuel adishatz" in titre_norm:
+            phase = "apres"
+
+        if phase == "avant":
+            avant.append(row)
+        elif phase == "mi":
+            mi.append(row)
+        else:
+            apres.append(row)
+
+    return avant, mi, apres
+
+
+def format_tsv(rows: List[ConductorRow]) -> str:
+    lines = ["Heure\tIntervenant\tTitre\tContenu"]
+    for r in rows:
+        lines.append(f"{r.heure}\t{r.qui}\t{clean(r.titre)}\t{clean(r.contenu)}")
+    lines += [
+        "",  # ligne vide
+        "Checklist:",
+        f"Heures OK : {all(r.heure for r in rows)}",
+        f"Intervenants OK : {all(r.qui for r in rows)}",
+        f"Titres OK : {all(r.titre for r in rows)}",
+        f"Contenu OK : {all(r.contenu != 'à compléter' for r in rows)}",
+    ]
+    return "\n".join(lines)
+
+
+def main(pdf_conductor: str, pdf_briefing: str) -> Dict[str, str]:
+    rows = extract_conductor(pdf_conductor)
+    sections = extract_briefing(pdf_briefing)
+    match_titles(rows, sections)
+    avant, mi, apres = segment_rows(rows)
+
+    return {
+        "avant_match": format_tsv(avant),
+        "mi_temps": format_tsv(mi),
+        "apres_match": format_tsv(apres),
+    }
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) != 3:
+        print("Usage : python conducteur_tool.py <conducteur.pdf> <briefing.pdf>")
+        sys.exit(1)
+    tables = main(sys.argv[1], sys.argv[2])
+    for name, content in tables.items():
+        print(f"\n=== {name.upper()} ===\n{content}\n")
+``` |
+
+Copiez chaque fichier dans votre dépôt GitHub, installez les dépendances (`pip install -r requirements.txt`) puis exécutez la commande suivante :
+
+```bash
+python conducteur_tool.py conducteur.pdf briefing.pdf
